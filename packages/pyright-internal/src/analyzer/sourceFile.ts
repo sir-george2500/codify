@@ -60,11 +60,7 @@ interface ResolveImportResult {
     builtinsImportResult?: ImportResult | undefined;
 }
 
-// Indicates what language the source file is written in.
-export enum LanguageMode {
-    Python = 'Python',
-    Codon = 'Codon',
-}
+import { LanguageMode } from './languageMode';
 
 // Indicates whether IPython syntax is supported and if so, what
 // type of notebook support is in use.
@@ -745,6 +741,7 @@ export class SourceFile {
                     this._uri,
                     fileContents!,
                     this._ipythonMode !== IPythonMode.None,
+                    this._languageMode ?? LanguageMode.Python, // Defensive: safe default
                     diagSink,
                 );
 
@@ -1513,6 +1510,7 @@ export class SourceFile {
         fileUri: Uri,
         fileContents: string,
         useNotebookMode: boolean,
+        languageMode: LanguageMode,
         diagSink: DiagnosticSink,
     ): ParseFileResults {
         // Use the configuration options to determine the environment zin which
@@ -1521,6 +1519,7 @@ export class SourceFile {
 
         const parseOptions = new ParseOptions();
         parseOptions.useNotebookMode = useNotebookMode;
+        parseOptions.languageMode = languageMode ?? LanguageMode.Python; // Defensive: safe default
         if (fileUri.pathEndsWith('pyi')) {
             parseOptions.isStubFile = true;
         }
