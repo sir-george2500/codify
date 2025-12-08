@@ -60,6 +60,12 @@ interface ResolveImportResult {
     builtinsImportResult?: ImportResult | undefined;
 }
 
+// Indicates what language the source file is written in.
+export enum LanguageMode {
+    Python = 'Python',
+    Codon = 'Codon',
+}
+
 // Indicates whether IPython syntax is supported and if so, what
 // type of notebook support is in use.
 export enum IPythonMode {
@@ -248,6 +254,9 @@ export class SourceFile {
     // the file is parsed.
     private _diagnosticRuleSet = getBasicDiagnosticRuleSet();
 
+    // Indicate what language mode this file is in (Python or Codon).
+    private _languageMode: LanguageMode;
+
     // Indicate whether this file is for ipython or not.
     private _ipythonMode = IPythonMode.None;
     private _logTracker: LogTracker;
@@ -267,7 +276,7 @@ export class SourceFile {
         editMode: SourceFileEditMode,
         console?: ConsoleInterface,
         logTracker?: LogTracker,
-        ipythonMode?: IPythonMode
+        ipythonMode?: IPythonMode,
     ) {
         this.fileSystem = serviceProvider.get(ServiceKeys.fs);
         this._console = console || new StandardConsole();
@@ -312,6 +321,14 @@ export class SourceFile {
         // 'FG' or 'BG' based on current thread.
         this._logTracker = logTracker ?? new LogTracker(console, isMainThread ? 'FG' : 'BG');
         this._ipythonMode = ipythonMode ?? IPythonMode.None;
+
+        // Detect language mode by file extension (defensive coding)
+        const hasCodonExtension = this._uri?.hasExtension('.codon') ?? false;
+        this._languageMode = hasCodonExtension ? LanguageMode.Codon : LanguageMode.Python;
+    }
+
+    getLanguageMode(): LanguageMode {
+        return this._languageMode;
     }
 
     getIPythonMode(): IPythonMode {
@@ -541,7 +558,7 @@ export class SourceFile {
             if (fileStat.size > maxSourceFileSize) {
                 this._console.error(
                     `File length of "${this._uri}" is ${fileStat.size} ` +
-                        `which exceeds the maximum supported file size of ${maxSourceFileSize}`
+                        `which exceeds the maximum supported file size of ${maxSourceFileSize}`,
                 );
                 throw new Error('File larger than max');
             }
@@ -728,7 +745,7 @@ export class SourceFile {
                     this._uri,
                     fileContents!,
                     this._ipythonMode !== IPythonMode.None,
-                    diagSink
+                    diagSink,
                 );
 
                 assert(parseFileResults !== undefined && parseFileResults.tokenizerOutput !== undefined);
@@ -751,7 +768,7 @@ export class SourceFile {
                     const importResult = this._resolveImports(
                         importResolver,
                         parseFileResults.parserOutput.importedModules,
-                        execEnvironment
+                        execEnvironment,
                     );
 
                     this._writableData.imports = importResult.imports;
@@ -763,7 +780,7 @@ export class SourceFile {
                     this._addTaskListDiagnostics(
                         configOptions.taskListTokens,
                         parseFileResults.tokenizerOutput,
-                        this._writableData.taskListDiagnostics
+                        this._writableData.taskListDiagnostics,
                     );
                 });
 
@@ -778,7 +795,7 @@ export class SourceFile {
                     parseFileResults.tokenizerOutput.lines,
                     execEnvironment.diagnosticRuleSet,
                     useStrict,
-                    commentDiags
+                    commentDiags,
                 );
 
                 this._writableData.commentDiagnostics = [];
@@ -788,8 +805,8 @@ export class SourceFile {
                         new Diagnostic(
                             DiagnosticCategory.Error,
                             commentDiag.message,
-                            convertTextRangeToRange(commentDiag.range, parseFileResults.tokenizerOutput.lines)
-                        )
+                            convertTextRangeToRange(commentDiag.range, parseFileResults.tokenizerOutput.lines),
+                        ),
                     );
                 });
             } catch (e: any) {
@@ -801,7 +818,7 @@ export class SourceFile {
                     LocMessage.internalParseError().format({
                         file: this.getUri().toUserVisibleString(),
                         message,
-                    })
+                    }),
                 );
 
                 // Create dummy parse results.
@@ -839,7 +856,7 @@ export class SourceFile {
                         file: this.getUri().toUserVisibleString(),
                         message,
                     }),
-                    getEmptyRange()
+                    getEmptyRange(),
                 );
                 this._writableData.parseDiagnostics = diagSink.fetchAndClear();
                 this._writableData.taskListDiagnostics = diagSink.fetchAndClear();
@@ -864,7 +881,7 @@ export class SourceFile {
         configOptions: ConfigOptions,
         importLookup: ImportLookup,
         builtinsScope: Scope | undefined,
-        futureImports: Set<string>
+        futureImports: Set<string>,
     ) {
         assert(!this.isParseRequired(), 'Bind called before parsing');
         assert(this.isBindingRequired(), 'Bind called unnecessarily');
@@ -905,7 +922,7 @@ export class SourceFile {
                     LocMessage.internalBindError().format({
                         file: this.getUri().toUserVisibleString(),
                         message,
-                    })
+                    }),
                 );
 
                 const diagSink = this.createDiagnosticSink();
@@ -914,7 +931,7 @@ export class SourceFile {
                         file: this.getUri().toUserVisibleString(),
                         message,
                     }),
-                    getEmptyRange()
+                    getEmptyRange(),
                 );
                 this._writableData.bindDiagnostics = diagSink.fetchAndClear();
 
@@ -937,7 +954,7 @@ export class SourceFile {
         importLookup: ImportLookup,
         importResolver: ImportResolver,
         evaluator: TypeEvaluator,
-        dependentFiles?: ParserOutput[]
+        dependentFiles?: ParserOutput[],
     ) {
         assert(!this.isParseRequired(), `Check called before parsing: state=${this._writableData.debugPrint()}`);
         assert(!this.isBindingRequired(), `Check called before binding: state=${this._writableData.debugPrint()}`);
@@ -954,7 +971,7 @@ export class SourceFile {
                         importResolver,
                         evaluator,
                         this._writableData.parserOutput!,
-                        dependentFiles
+                        dependentFiles,
                     );
                     this._writableData.isCheckingInProgress = true;
                     checker.check();
@@ -975,7 +992,7 @@ export class SourceFile {
                         LocMessage.internalTypeCheckingError().format({
                             file: this.getUri().toUserVisibleString(),
                             message,
-                        })
+                        }),
                     );
                     const diagSink = this.createDiagnosticSink();
                     diagSink.addError(
@@ -983,7 +1000,7 @@ export class SourceFile {
                             file: this.getUri().toUserVisibleString(),
                             message,
                         }),
-                        getEmptyRange()
+                        getEmptyRange(),
                     );
 
                     this._writableData.checkerDiagnostics = diagSink.fetchAndClear();
@@ -1114,7 +1131,7 @@ export class SourceFile {
                                 const oldClone = pyrightIgnoreLinesClone.get(line);
                                 if (oldClone?.rulesList) {
                                     const filteredRulesList = oldClone.rulesList.filter(
-                                        (rule) => rule.text !== diagRule
+                                        (rule) => rule.text !== diagRule,
                                     );
                                     if (filteredRulesList.length === 0) {
                                         pyrightIgnoreLinesClone.delete(line);
@@ -1153,7 +1170,7 @@ export class SourceFile {
                 (diag) =>
                     diag.category === DiagnosticCategory.Error ||
                     diag.category === DiagnosticCategory.Warning ||
-                    diag.category === DiagnosticCategory.Information
+                    diag.category === DiagnosticCategory.Information,
             );
 
             const isUnreachableCodeRange = (range: Range) => {
@@ -1161,7 +1178,7 @@ export class SourceFile {
                     (diag) =>
                         diag.category === DiagnosticCategory.UnreachableCode &&
                         diag.range.start.line <= range.start.line &&
-                        diag.range.end.line >= range.end.line
+                        diag.range.end.line >= range.end.line,
                 );
             };
 
@@ -1210,7 +1227,7 @@ export class SourceFile {
                             const range = convertOffsetsToRange(
                                 rangeStart,
                                 rangeEnd,
-                                this._writableData.tokenizerLines!
+                                this._writableData.tokenizerLines!,
                             );
 
                             if (!isUnreachableCodeRange(range)) {
@@ -1219,7 +1236,7 @@ export class SourceFile {
                                     LocMessage.unnecessaryPyrightIgnoreRule().format({
                                         name: unusedRule.text,
                                     }),
-                                    range
+                                    range,
                                 );
                                 diag.setRule(DiagnosticRule.reportUnnecessaryTypeIgnoreComment);
                                 unnecessaryTypeIgnoreDiags.push(diag);
@@ -1245,7 +1262,7 @@ export class SourceFile {
                             .getPaths()
                             .map((path) => '  ' + path.toUserVisibleString())
                             .join('\n'),
-                    getEmptyRange()
+                    getEmptyRange(),
                 );
                 diag.setRule(DiagnosticRule.reportImportCycles);
                 diagList.push(diag);
@@ -1257,8 +1274,8 @@ export class SourceFile {
                 new Diagnostic(
                     DiagnosticCategory.Error,
                     LocMessage.importDepthExceeded().format({ depth: this._writableData.hitMaxImportDepth }),
-                    getEmptyRange()
-                )
+                    getEmptyRange(),
+                ),
             );
         }
 
@@ -1270,7 +1287,7 @@ export class SourceFile {
                     (diag) =>
                         diag.category !== DiagnosticCategory.Error &&
                         diag.category !== DiagnosticCategory.Warning &&
-                        diag.category !== DiagnosticCategory.Information
+                        diag.category !== DiagnosticCategory.Information,
                 );
             }
         }
@@ -1286,7 +1303,7 @@ export class SourceFile {
                 (diag) =>
                     diag.category === DiagnosticCategory.UnusedCode ||
                     diag.category === DiagnosticCategory.UnreachableCode ||
-                    diag.category === DiagnosticCategory.Deprecated
+                    diag.category === DiagnosticCategory.Deprecated,
             );
         }
 
@@ -1316,7 +1333,7 @@ export class SourceFile {
     private _addTaskListDiagnostics(
         taskListTokens: TaskListToken[] | undefined,
         tokenizerOutput: TokenizerOutput,
-        diagList: Diagnostic[]
+        diagList: Diagnostic[],
     ) {
         if (!taskListTokens || taskListTokens.length === 0 || !diagList) {
             return;
@@ -1360,7 +1377,7 @@ export class SourceFile {
                     // Add the diagnostic to the list and trim whitespace from the comment so
                     // it's easier to read in the task list.
                     diagList.push(
-                        new Diagnostic(DiagnosticCategory.TaskItem, comment.value.trim(), range, token.priority)
+                        new Diagnostic(DiagnosticCategory.TaskItem, comment.value.trim(), range, token.priority),
                     );
                 }
             }
@@ -1371,7 +1388,7 @@ export class SourceFile {
         configOptions: ConfigOptions,
         importLookup: ImportLookup,
         builtinsScope: Scope | undefined,
-        futureImports: Set<string>
+        futureImports: Set<string>,
     ) {
         assert(this._writableData.parserOutput !== undefined, 'Parse results not available');
         const analysisDiagnostics = this.createTextRangeDiagnosticSink(this._writableData.tokenizerLines!);
@@ -1414,7 +1431,7 @@ export class SourceFile {
     private _resolveImports(
         importResolver: ImportResolver,
         moduleImports: ModuleImport[],
-        execEnv: ExecutionEnvironment
+        execEnv: ExecutionEnvironment,
     ): ResolveImportResult {
         const imports: ImportResult[] = [];
 
@@ -1476,7 +1493,7 @@ export class SourceFile {
                 assert(moduleImport.nameParts.length - 1 < moduleImport.nameNode.d.nameParts.length);
                 AnalyzerNodeInfo.setImportInfo(
                     moduleImport.nameNode.d.nameParts[moduleImport.nameParts.length - 1],
-                    importResult
+                    importResult,
                 );
             }
         }
@@ -1496,7 +1513,7 @@ export class SourceFile {
         fileUri: Uri,
         fileContents: string,
         useNotebookMode: boolean,
-        diagSink: DiagnosticSink
+        diagSink: DiagnosticSink,
     ): ParseFileResults {
         // Use the configuration options to determine the environment zin which
         // this source file will be executed.
