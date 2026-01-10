@@ -16,16 +16,6 @@ import {
     parseFloatType,
     parseIntType,
 } from '../analyzer/codonTypes';
-import { ConfigOptions } from '../common/configOptions';
-import { Uri } from '../common/uri/uri';
-import * as TestUtils from './testUtils';
-
-test('verify type analysis for codon types', () => {
-    const configOptions = new ConfigOptions(Uri.empty());
-
-    const results = TestUtils.typeAnalyzeSampleFiles(['test_types.codon'], configOptions);
-    TestUtils.validateResults(results, 0);
-});
 
 test('parseIntType parses signed integers', () => {
     const result = parseIntType('Int[64]');

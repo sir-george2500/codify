@@ -103,4 +103,9 @@ export enum DiagnosticRule {
     reportMatchNotExhaustive = 'reportMatchNotExhaustive',
     reportUnreachable = 'reportUnreachable',
     reportImplicitOverride = 'reportImplicitOverride',
+
+    // Codon-specific diagnostic rules
+    reportCodonDynamicType = 'reportCodonDynamicType',
+    reportCodonInvalidIntWidth = 'reportCodonInvalidIntWidth',
+    reportCodonFFITypeError = 'reportCodonFFITypeError',
 }

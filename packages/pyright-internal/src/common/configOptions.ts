@@ -71,7 +71,7 @@ export class ExecutionEnvironment {
         defaultPythonVersion: PythonVersion | undefined,
         defaultPythonPlatform: string | undefined,
         defaultExtraPaths: Uri[] | undefined,
-        skipNativeLibraries = false
+        skipNativeLibraries = false,
     ) {
         this.name = name;
         this.root = root;
@@ -396,6 +396,11 @@ export interface DiagnosticRuleSet {
 
     // Report missing @override decorator.
     reportImplicitOverride: DiagnosticLevel;
+
+    // Codon-specific rules
+    reportCodonDynamicType: DiagnosticLevel;
+    reportCodonInvalidIntWidth: DiagnosticLevel;
+    reportCodonFFITypeError: DiagnosticLevel;
 }
 
 export function cloneDiagnosticRuleSet(diagSettings: DiagnosticRuleSet): DiagnosticRuleSet {
@@ -513,6 +518,10 @@ export function getDiagLevelDiagnosticRules() {
         DiagnosticRule.reportMatchNotExhaustive,
         DiagnosticRule.reportUnreachable,
         DiagnosticRule.reportImplicitOverride,
+        // Codon-specific rules
+        DiagnosticRule.reportCodonDynamicType,
+        DiagnosticRule.reportCodonInvalidIntWidth,
+        DiagnosticRule.reportCodonFFITypeError,
     ];
 }
 
@@ -620,6 +629,9 @@ export function getOffDiagnosticRuleSet(): DiagnosticRuleSet {
         reportMatchNotExhaustive: 'none',
         reportUnreachable: 'none',
         reportImplicitOverride: 'none',
+        reportCodonDynamicType: 'none',
+        reportCodonInvalidIntWidth: 'none',
+        reportCodonFFITypeError: 'none',
     };
 
     return diagSettings;
@@ -723,6 +735,9 @@ export function getBasicDiagnosticRuleSet(): DiagnosticRuleSet {
         reportMatchNotExhaustive: 'none',
         reportUnreachable: 'none',
         reportImplicitOverride: 'none',
+        reportCodonDynamicType: 'warning',
+        reportCodonInvalidIntWidth: 'error',
+        reportCodonFFITypeError: 'error',
     };
 
     return diagSettings;
@@ -826,6 +841,9 @@ export function getStandardDiagnosticRuleSet(): DiagnosticRuleSet {
         reportMatchNotExhaustive: 'none',
         reportUnreachable: 'none',
         reportImplicitOverride: 'none',
+        reportCodonDynamicType: 'error',
+        reportCodonInvalidIntWidth: 'error',
+        reportCodonFFITypeError: 'error',
     };
 
     return diagSettings;
@@ -929,6 +947,9 @@ export function getStrictDiagnosticRuleSet(): DiagnosticRuleSet {
         reportMatchNotExhaustive: 'error',
         reportUnreachable: 'none',
         reportImplicitOverride: 'none',
+        reportCodonDynamicType: 'error',
+        reportCodonInvalidIntWidth: 'error',
+        reportCodonFFITypeError: 'error',
     };
 
     return diagSettings;
@@ -1110,7 +1131,7 @@ export class ConfigOptions {
             this.defaultPythonVersion,
             this.defaultPythonPlatform,
             this.defaultExtraPaths,
-            this.skipNativeLibraries
+            this.skipNativeLibraries,
         );
     }
 
@@ -1137,7 +1158,7 @@ export class ConfigOptions {
 
     initializeTypeCheckingMode(
         typeCheckingMode: string | undefined,
-        severityOverrides?: DiagnosticSeverityOverridesMap
+        severityOverrides?: DiagnosticSeverityOverridesMap,
     ) {
         this.diagnosticRuleSet = ConfigOptions.getDiagnosticRuleSet(typeCheckingMode);
         this.effectiveTypeCheckingMode = typeCheckingMode as 'strict' | 'basic' | 'off' | 'standard';
@@ -1267,7 +1288,7 @@ export class ConfigOptions {
             (configRuleSet as any)[ruleName] = this._convertBoolean(
                 configObj[ruleName],
                 ruleName,
-                configRuleSet[ruleName] as boolean
+                configRuleSet[ruleName] as boolean,
             );
         });
 
@@ -1277,7 +1298,7 @@ export class ConfigOptions {
             (configRuleSet as any)[ruleName] = this._convertDiagnosticLevel(
                 configObj[ruleName],
                 ruleName,
-                configRuleSet[ruleName] as DiagnosticLevel
+                configRuleSet[ruleName] as DiagnosticLevel,
             );
         });
         this.diagnosticRuleSet = { ...configRuleSet };
@@ -1567,7 +1588,7 @@ export class ConfigOptions {
     }
 
     applyDiagnosticOverrides(
-        diagnosticOverrides: DiagnosticSeverityOverridesMap | DiagnosticBooleanOverridesMap | undefined
+        diagnosticOverrides: DiagnosticSeverityOverridesMap | DiagnosticBooleanOverridesMap | undefined,
     ) {
         if (!diagnosticOverrides) {
             return;
@@ -1608,7 +1629,7 @@ export class ConfigOptions {
                         this.diagnosticRuleSet,
                         this.defaultPythonVersion,
                         this.defaultPythonPlatform,
-                        this.defaultExtraPaths || []
+                        this.defaultExtraPaths || [],
                     );
 
                     if (execEnv) {
@@ -1657,7 +1678,7 @@ export class ConfigOptions {
         configDiagnosticRuleSet: DiagnosticRuleSet,
         configPythonVersion: PythonVersion | undefined,
         configPythonPlatform: string | undefined,
-        configExtraPaths: Uri[]
+        configExtraPaths: Uri[],
     ): ExecutionEnvironment | undefined {
         try {
             const envObjKeys = envObj && typeof envObj === 'object' ? Object.getOwnPropertyNames(envObj) : [];
@@ -1669,7 +1690,7 @@ export class ConfigOptions {
                 configDiagnosticRuleSet,
                 configPythonVersion,
                 configPythonPlatform,
-                configExtraPaths
+                configExtraPaths,
             );
 
             // Validate the root.
@@ -1685,7 +1706,7 @@ export class ConfigOptions {
             if (envObj.extraPaths) {
                 if (!Array.isArray(envObj.extraPaths)) {
                     console.error(
-                        `Config executionEnvironments index ${index}: extraPaths field must contain an array.`
+                        `Config executionEnvironments index ${index}: extraPaths field must contain an array.`,
                     );
                 } else {
                     // If specified, this overrides the default extra paths inherited
@@ -1697,7 +1718,7 @@ export class ConfigOptions {
                         if (typeof path !== 'string') {
                             console.error(
                                 `Config executionEnvironments index ${index}:` +
-                                    ` extraPaths field ${pathIndex} must be a string.`
+                                    ` extraPaths field ${pathIndex} must be a string.`,
                             );
                         } else {
                             newExecEnv.extraPaths.push(configDirUri.resolvePaths(path));
@@ -1747,7 +1768,7 @@ export class ConfigOptions {
                 (newExecEnv.diagnosticRuleSet as any)[ruleName] = this._convertBoolean(
                     envObj[ruleName],
                     ruleName,
-                    newExecEnv.diagnosticRuleSet[ruleName] as boolean
+                    newExecEnv.diagnosticRuleSet[ruleName] as boolean,
                 );
             });
 
@@ -1757,7 +1778,7 @@ export class ConfigOptions {
                 (newExecEnv.diagnosticRuleSet as any)[ruleName] = this._convertDiagnosticLevel(
                     envObj[ruleName],
                     ruleName,
-                    newExecEnv.diagnosticRuleSet[ruleName] as DiagnosticLevel
+                    newExecEnv.diagnosticRuleSet[ruleName] as DiagnosticLevel,
                 );
             });
 
