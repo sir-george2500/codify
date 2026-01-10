@@ -40,6 +40,7 @@ import {
     ClassNode,
     ComprehensionNode,
     ContinueNode,
+    DecoratorNode,
     DelNode,
     ExceptNode,
     ExpressionNode,
@@ -103,6 +104,7 @@ import {
     isCodeFlowSupportedForReference,
     wildcardImportReferenceKey,
 } from './codeFlowTypes';
+import { CodonDecoratorType, getCodonDecoratorType } from './codonDecorators';
 import {
     AliasDeclaration,
     ClassDeclaration,
@@ -264,7 +266,10 @@ export class Binder extends ParseTreeWalker {
     // the current function.
     private _codeFlowComplexity = 0;
 
-    constructor(fileInfo: AnalyzerFileInfo, private _moduleSymbolOnly = false) {
+    constructor(
+        fileInfo: AnalyzerFileInfo,
+        private _moduleSymbolOnly = false,
+    ) {
         super();
 
         this._fileInfo = fileInfo;
@@ -309,7 +314,7 @@ export class Binder extends ParseTreeWalker {
 
                 AnalyzerNodeInfo.setCodeFlowExpressions(node, this._currentScopeCodeFlowExpressions!);
                 AnalyzerNodeInfo.setCodeFlowComplexity(node, this._codeFlowComplexity);
-            }
+            },
         );
 
         // Perform all analysis that was deferred during the first pass.
@@ -379,7 +384,7 @@ export class Binder extends ParseTreeWalker {
                     importName: importResult.importName,
                     venv: this._fileInfo.executionEnvironment.name,
                 }),
-                node
+                node,
             );
             return true;
         }
@@ -413,7 +418,7 @@ export class Binder extends ParseTreeWalker {
             const diagnostic = this._addDiagnostic(
                 DiagnosticRule.reportMissingTypeStubs,
                 LocMessage.stubFileMissing().format({ importName: importResult.importName }),
-                node
+                node,
             );
             if (diagnostic) {
                 // Add a diagnostic action for resolving this diagnostic.
@@ -477,7 +482,7 @@ export class Binder extends ParseTreeWalker {
                     this._addSlotsToCurrentScope(this._dunderSlotsEntries);
                 }
                 this._dunderSlotsEntries = undefined;
-            }
+            },
         );
 
         this._createAssignmentTargetFlowNodes(node.d.name, /* walkTargets */ false, /* unbound */ false);
@@ -607,7 +612,7 @@ export class Binder extends ParseTreeWalker {
                     AnalyzerNodeInfo.setCodeFlowExpressions(node, this._currentScopeCodeFlowExpressions!);
                     AnalyzerNodeInfo.setCodeFlowComplexity(node, this._codeFlowComplexity);
                 });
-            }
+            },
         );
 
         this._createAssignmentTargetFlowNodes(node.d.name, /* walkTargets */ false, /* unbound */ false);
@@ -754,7 +759,7 @@ export class Binder extends ParseTreeWalker {
                 ) {
                     this._dunderAllNames = this._dunderAllNames.filter((name) => name !== argExpr.d.strings[0].d.value);
                     this._dunderAllStringNodes = this._dunderAllStringNodes.filter(
-                        (node) => node.d.value !== argExpr.d.strings[0].d.value
+                        (node) => node.d.value !== argExpr.d.strings[0].d.value,
                     );
                     emitDunderAllWarning = false;
                 }
@@ -778,7 +783,7 @@ export class Binder extends ParseTreeWalker {
                 this._addDiagnostic(
                     DiagnosticRule.reportUnsupportedDunderAll,
                     LocMessage.unsupportedDunderAllOperation(),
-                    node
+                    node,
                 );
             }
         }
@@ -815,7 +820,7 @@ export class Binder extends ParseTreeWalker {
             if (typeParamsSeen.has(name.d.value)) {
                 this._addSyntaxError(
                     LocMessage.typeParameterExistingTypeParameter().format({ name: name.d.value }),
-                    name
+                    name,
                 );
             } else {
                 typeParamsSeen.add(name.d.value);
@@ -888,7 +893,7 @@ export class Binder extends ParseTreeWalker {
             this._addDiagnostic(
                 DiagnosticRule.reportInvalidTypeForm,
                 LocMessage.annotationNotSupported(),
-                node.d.chainedAnnotationComment
+                node.d.chainedAnnotationComment,
             );
         }
 
@@ -980,7 +985,7 @@ export class Binder extends ParseTreeWalker {
                     this._addDiagnostic(
                         DiagnosticRule.reportUnsupportedDunderAll,
                         LocMessage.unsupportedDunderAllOperation(),
-                        node
+                        node,
                     );
                 }
             }
@@ -1065,7 +1070,7 @@ export class Binder extends ParseTreeWalker {
                 if (localSymbol) {
                     this._addSyntaxError(
                         LocMessage.assignmentExprComprehension().format({ name: node.d.name.d.value }),
-                        node.d.name
+                        node.d.name,
                     );
                     break;
                 }
@@ -1136,7 +1141,7 @@ export class Binder extends ParseTreeWalker {
                 this._addDiagnostic(
                     DiagnosticRule.reportUnsupportedDunderAll,
                     LocMessage.unsupportedDunderAllOperation(),
-                    node
+                    node,
                 );
             }
         }
@@ -1193,6 +1198,58 @@ export class Binder extends ParseTreeWalker {
         this.walk(node.d.valueExpr);
 
         return false;
+    }
+
+    // Codon: Detect and tag Codon-specific decorators
+    override visitDecorator(node: DecoratorNode): boolean {
+        // Extract decorator name from expression
+        const decoratorName = this._getDecoratorName(node);
+
+        if (decoratorName) {
+            const codonType = getCodonDecoratorType(decoratorName);
+            if (codonType !== CodonDecoratorType.None) {
+                // Tag this decorator with its Codon type
+                node.d.codonDecoratorType = codonType;
+            }
+        }
+
+        // Continue walking children
+        return true;
+    }
+
+    // Helper to extract decorator name from expression
+    private _getDecoratorName(node: DecoratorNode): string | undefined {
+        const expr = node.d.expr;
+
+        // Simple name: @python
+        if (expr.nodeType === ParseNodeType.Name) {
+            return expr.d.value;
+        }
+
+        // Call expression: @par(num_threads=4)
+        if (expr.nodeType === ParseNodeType.Call) {
+            const leftExpr = expr.d.leftExpr;
+            if (leftExpr.nodeType === ParseNodeType.Name) {
+                return leftExpr.d.value;
+            }
+            // @codon.jit(...)
+            if (leftExpr.nodeType === ParseNodeType.MemberAccess) {
+                const moduleExpr = leftExpr.d.leftExpr;
+                if (moduleExpr.nodeType === ParseNodeType.Name) {
+                    return `${moduleExpr.d.value}.${leftExpr.d.member.d.value}`;
+                }
+            }
+        }
+
+        // Member access: @codon.jit
+        if (expr.nodeType === ParseNodeType.MemberAccess) {
+            const moduleExpr = expr.d.leftExpr;
+            if (moduleExpr.nodeType === ParseNodeType.Name) {
+                return `${moduleExpr.d.value}.${expr.d.member.d.value}`;
+            }
+        }
+
+        return undefined;
     }
 
     override visitFor(node: ForNode) {
@@ -1349,7 +1406,7 @@ export class Binder extends ParseTreeWalker {
                 this._fileInfo.executionEnvironment,
                 this._fileInfo.definedConstants,
                 this._typingImportAliases,
-                this._sysImportAliases
+                this._sysImportAliases,
             );
 
             this._bindConditional(node.d.testExpr, thenLabel, elseLabel);
@@ -1391,7 +1448,7 @@ export class Binder extends ParseTreeWalker {
             this._fileInfo.executionEnvironment,
             this._fileInfo.definedConstants,
             this._typingImportAliases,
-            this._sysImportAliases
+            this._sysImportAliases,
         );
 
         const preLoopLabel = this._createLoopLabel();
@@ -2069,14 +2126,14 @@ export class Binder extends ParseTreeWalker {
         const contextManagerSwallowExceptionTarget = this._createContextManagerLabel(
             node.d.withItems.map((item) => item.d.expr),
             !!node.d.isAsync,
-            /* blockIfSwallowsExceptions */ false
+            /* blockIfSwallowsExceptions */ false,
         );
         this._addAntecedent(contextManagerSwallowExceptionTarget, this._currentFlowNode!);
 
         const contextManagerForwardExceptionTarget = this._createContextManagerLabel(
             node.d.withItems.map((item) => item.d.expr),
             !!node.d.isAsync,
-            /* blockIfSwallowsExceptions */ true
+            /* blockIfSwallowsExceptions */ true,
         );
         this._currentExceptTargets.forEach((exceptionTarget) => {
             this._addAntecedent(exceptionTarget, contextManagerForwardExceptionTarget);
@@ -2247,7 +2304,7 @@ export class Binder extends ParseTreeWalker {
                         this._createAssignmentTargetFlowNodes(
                             compr.d.targetExpr,
                             /* walkTargets */ true,
-                            /* unbound */ false
+                            /* unbound */ false,
                         );
                     } else {
                         const trueLabel = this._createBranchLabel();
@@ -2259,7 +2316,7 @@ export class Binder extends ParseTreeWalker {
                 this.walk(node.d.expr);
                 this._addAntecedent(falseLabel, this._currentFlowNode!);
                 this._currentFlowNode = this._finishFlowLabel(falseLabel);
-            }
+            },
         );
 
         return false;
@@ -2462,7 +2519,7 @@ export class Binder extends ParseTreeWalker {
                     SymbolFlags.InitiallyUnbound |
                         SymbolFlags.ClassMember |
                         SymbolFlags.InstanceMember |
-                        SymbolFlags.SlotsMember
+                        SymbolFlags.SlotsMember,
                 );
                 const honorPrivateNaming = this._fileInfo.diagnosticRuleSet.reportPrivateUsage !== 'none';
                 if (isPrivateOrProtectedName(slotName) && honorPrivateNaming) {
@@ -2568,10 +2625,10 @@ export class Binder extends ParseTreeWalker {
             aliasDecl?.uri && !aliasDecl.uri.isEmpty() && aliasDecl.loadSymbolsFromPath
                 ? aliasDecl.uri
                 : aliasDecl?.submoduleFallback?.uri &&
-                  !aliasDecl.submoduleFallback.uri.isEmpty() &&
-                  aliasDecl.submoduleFallback.loadSymbolsFromPath
-                ? aliasDecl.submoduleFallback.uri
-                : undefined;
+                    !aliasDecl.submoduleFallback.uri.isEmpty() &&
+                    aliasDecl.submoduleFallback.loadSymbolsFromPath
+                  ? aliasDecl.submoduleFallback.uri
+                  : undefined;
         if (!resolvedUri) {
             return undefined;
         }
@@ -2603,7 +2660,7 @@ export class Binder extends ParseTreeWalker {
         node: ImportAsNode | ImportFromNode,
         importAlias: NameNode | undefined,
         importInfo: ImportResult | undefined,
-        symbol: Symbol
+        symbol: Symbol,
     ) {
         const firstNamePartValue = node.d.module.d.nameParts[0].d.value;
 
@@ -2627,7 +2684,7 @@ export class Binder extends ParseTreeWalker {
                 (decl) =>
                     decl.type === DeclarationType.Alias &&
                     decl.firstNamePart === firstNamePartValue &&
-                    (!uriOfFirstSubmodule || uriOfFirstSubmodule.equals(decl.uri))
+                    (!uriOfFirstSubmodule || uriOfFirstSubmodule.equals(decl.uri)),
             );
         let newDecl: AliasDeclaration;
         let uriOfLastSubmodule: Uri;
@@ -2828,7 +2885,7 @@ export class Binder extends ParseTreeWalker {
     private _createContextManagerLabel(
         expressions: ExpressionNode[],
         isAsync: boolean,
-        blockIfSwallowsExceptions: boolean
+        blockIfSwallowsExceptions: boolean,
     ) {
         const flowNode: FlowPostContextManagerLabel = {
             flags: FlowFlags.PostContextManager | FlowFlags.BranchLabel,
@@ -2930,7 +2987,7 @@ export class Binder extends ParseTreeWalker {
                     this._currentFlowNode = this._createFlowConditional(
                         isPositiveTest ? FlowFlags.TrueNeverCondition : FlowFlags.FalseNeverCondition,
                         this._currentFlowNode!,
-                        node
+                        node,
                     );
                 }
             }
@@ -2947,11 +3004,11 @@ export class Binder extends ParseTreeWalker {
         if (!this._isLogicalExpression(node)) {
             this._addAntecedent(
                 trueTarget,
-                this._createFlowConditional(FlowFlags.TrueCondition, this._currentFlowNode!, node)
+                this._createFlowConditional(FlowFlags.TrueCondition, this._currentFlowNode!, node),
             );
             this._addAntecedent(
                 falseTarget,
-                this._createFlowConditional(FlowFlags.FalseCondition, this._currentFlowNode!, node)
+                this._createFlowConditional(FlowFlags.FalseCondition, this._currentFlowNode!, node),
             );
         }
     }
@@ -2963,7 +3020,7 @@ export class Binder extends ParseTreeWalker {
     private _setTrueFalseTargets(
         trueTarget: FlowLabel | undefined,
         falseTarget: FlowLabel | undefined,
-        callback: () => void
+        callback: () => void,
     ) {
         const savedTrueTarget = this._currentTrueTarget;
         const savedFalseTarget = this._currentFalseTarget;
@@ -2985,7 +3042,7 @@ export class Binder extends ParseTreeWalker {
             this._fileInfo.executionEnvironment,
             this._fileInfo.definedConstants,
             this._typingImportAliases,
-            this._sysImportAliases
+            this._sysImportAliases,
         );
         if (
             (staticValue === true && flags & FlowFlags.FalseCondition) ||
@@ -3050,7 +3107,7 @@ export class Binder extends ParseTreeWalker {
     private _isNarrowingExpression(
         expression: ExpressionNode,
         expressionList: CodeFlowReferenceExpressionNode[],
-        options: NarrowExprOptions = {}
+        options: NarrowExprOptions = {},
     ): boolean {
         switch (expression.nodeType) {
             case ParseNodeType.Name:
@@ -3145,7 +3202,7 @@ export class Binder extends ParseTreeWalker {
                         return this._isNarrowingExpression(
                             expression.d.leftExpr.d.args[0].d.valueExpr,
                             expressionList,
-                            { ...options, isComplexExpression: true }
+                            { ...options, isComplexExpression: true },
                         );
                     }
 
@@ -3580,7 +3637,7 @@ export class Binder extends ParseTreeWalker {
     private _addImplicitSymbolToCurrentScope(
         nameValue: string,
         node: ModuleNode | ClassNode | FunctionNode,
-        type: IntrinsicType
+        type: IntrinsicType,
     ) {
         const symbol = this._addSymbolToCurrentScope(nameValue, /* isInitiallyUnbound */ false);
         if (symbol) {
@@ -3628,7 +3685,7 @@ export class Binder extends ParseTreeWalker {
         scopeType: ScopeType,
         parentScope: Scope | undefined,
         proxyScope: Scope | undefined,
-        callback: () => void
+        callback: () => void,
     ) {
         const prevScope = this._currentScope;
         const newScope = new Scope(scopeType, parentScope, proxyScope);
@@ -3654,7 +3711,7 @@ export class Binder extends ParseTreeWalker {
     private _addInferredTypeAssignmentForVariable(
         target: ExpressionNode,
         source: ParseNode,
-        isPossibleTypeAlias = false
+        isPossibleTypeAlias = false,
     ) {
         switch (target.nodeType) {
             case ParseNodeType.Name: {
@@ -3906,7 +3963,7 @@ export class Binder extends ParseTreeWalker {
             this._addDiagnostic(
                 DiagnosticRule.reportInvalidTypeForm,
                 LocMessage.annotationNotSupported(),
-                typeAnnotation
+                typeAnnotation,
             );
         }
     }
@@ -3924,7 +3981,7 @@ export class Binder extends ParseTreeWalker {
             typeAnnotation,
             name,
             this._dataclassesImportAliases,
-            this._dataclassesSymbolAliases
+            this._dataclassesSymbolAliases,
         );
     }
 
@@ -3932,7 +3989,7 @@ export class Binder extends ParseTreeWalker {
         typeAnnotation: ExpressionNode,
         name: string,
         importAliases: string[],
-        symbolAliases: Map<string, string>
+        symbolAliases: Map<string, string>,
     ) {
         let annotationNode = typeAnnotation;
 

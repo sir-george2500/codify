@@ -94,7 +94,7 @@ interface CachedDir {
 }
 
 const supportedNativeLibExtensions = ['.pyd', '.so', '.dylib'];
-export const supportedSourceFileExtensions = ['.py', '.pyi', '.codon'];
+export const supportedSourceFileExtensions = ['.codon'];
 export const supportedFileExtensions = [...supportedSourceFileExtensions, ...supportedNativeLibExtensions];
 
 // Should we allow partial resolution for third-party packages? Some use tricks

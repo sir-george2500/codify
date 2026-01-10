@@ -303,7 +303,7 @@ export namespace ForNode {
         forToken: Token,
         targetExpr: ExpressionNode,
         iterableExpr: ExpressionNode,
-        forSuite: SuiteNode
+        forSuite: SuiteNode,
     ) {
         const node: ForNode = {
             start: forToken.start,
@@ -715,6 +715,9 @@ export namespace WithItemNode {
 export interface DecoratorNode extends ParseNodeBase<ParseNodeType.Decorator> {
     d: {
         expr: ExpressionNode;
+        // Codon: Identifies the type of Codon decorator (if applicable)
+        // This is set during analysis when we recognize Codon-specific decorators
+        codonDecoratorType?: string | undefined;
     };
 }
 
@@ -863,7 +866,7 @@ export namespace ErrorNode {
         initialRange: TextRange,
         category: ErrorExpressionCategory,
         child?: ExpressionNode,
-        decorators?: DecoratorNode[]
+        decorators?: DecoratorNode[],
     ) {
         const node: ErrorNode = {
             start: initialRange.start,
@@ -947,7 +950,7 @@ export namespace BinaryOperationNode {
         leftExpr: ExpressionNode,
         rightExpr: ExpressionNode,
         operatorToken: Token,
-        operator: OperatorType
+        operator: OperatorType,
     ) {
         const node: BinaryOperationNode = {
             start: leftExpr.start,
@@ -1062,7 +1065,7 @@ export namespace TypeParameterNode {
         name: NameNode,
         typeParamKind: TypeParamKind,
         boundExpr?: ExpressionNode,
-        defaultExpr?: ExpressionNode
+        defaultExpr?: ExpressionNode,
     ) {
         const node: TypeParameterNode = {
             start: name.start,
@@ -1138,7 +1141,7 @@ export namespace TypeAliasNode {
         typeToken: KeywordToken,
         name: NameNode,
         expr: ExpressionNode,
-        typeParams?: TypeParameterListNode
+        typeParams?: TypeParameterListNode,
     ) {
         const node: TypeAliasNode = {
             start: typeToken.start,
@@ -1212,7 +1215,7 @@ export namespace FunctionAnnotationNode {
         openParenToken: Token,
         isEllipsis: boolean,
         paramAnnotations: ExpressionNode[],
-        returnAnnotation: ExpressionNode
+        returnAnnotation: ExpressionNode,
     ) {
         const node: FunctionAnnotationNode = {
             start: openParenToken.start,
@@ -1257,7 +1260,7 @@ export namespace AugmentedAssignmentNode {
         leftExpr: ExpressionNode,
         rightExpr: ExpressionNode,
         operator: OperatorType,
-        destExpr: ExpressionNode
+        destExpr: ExpressionNode,
     ) {
         const node: AugmentedAssignmentNode = {
             start: leftExpr.start,
@@ -1484,7 +1487,7 @@ export namespace IndexNode {
         leftExpr: ExpressionNode,
         items: ArgumentNode[],
         trailingComma: boolean,
-        closeBracketToken: Token
+        closeBracketToken: Token,
     ) {
         const node: IndexNode = {
             start: leftExpr.start,
@@ -1788,7 +1791,7 @@ export namespace FormatStringNode {
         endToken: FStringEndToken | undefined,
         middleTokens: FStringMiddleToken[],
         fieldExprs: ExpressionNode[],
-        formatExprs: ExpressionNode[]
+        formatExprs: ExpressionNode[],
     ) {
         const node: FormatStringNode = {
             start: startToken.start,
@@ -2154,6 +2157,9 @@ export interface ImportFromNode extends ParseNodeBase<ParseNodeType.ImportFrom> 
         usesParens: boolean;
         wildcardToken?: Token;
         missingImport?: boolean;
+        // Codon FFI: source type for foreign imports
+        // 'C' = from C import, 'python' = from python import, undefined = regular import
+        ffiSource?: 'C' | 'python' | undefined;
     };
 }
 
@@ -2186,6 +2192,10 @@ export interface ImportFromAsNode extends ParseNodeBase<ParseNodeType.ImportFrom
     d: {
         name: NameNode;
         alias?: NameNode | undefined;
+        // Codon FFI: type signature for foreign function imports
+        // e.g., from C import func(int, float) -> cobj
+        ffiArgTypes?: ExpressionNode[] | undefined; // The argument types in parentheses
+        ffiReturnType?: ExpressionNode | undefined; // The return type after ->
     };
 }
 
@@ -2406,7 +2416,7 @@ export namespace CaseNode {
         pattern: PatternAtomNode,
         isIrrefutable: boolean,
         guardExpr: ExpressionNode | undefined,
-        suite: SuiteNode
+        suite: SuiteNode,
     ) {
         const node: CaseNode = {
             start: caseToken.start,
@@ -2449,7 +2459,7 @@ export namespace PatternSequenceNode {
             (entry) =>
                 entry.d.orPatterns.length === 1 &&
                 entry.d.orPatterns[0].nodeType === ParseNodeType.PatternCapture &&
-                entry.d.orPatterns[0].d.isStar
+                entry.d.orPatterns[0].d.isStar,
         );
 
         const node: PatternSequenceNode = {
@@ -2684,7 +2694,7 @@ export interface PatternMappingKeyEntryNode extends ParseNodeBase<ParseNodeType.
 export namespace PatternMappingKeyEntryNode {
     export function create(
         keyPattern: PatternLiteralNode | PatternValueNode | ErrorNode,
-        valuePattern: PatternAsNode | ErrorNode
+        valuePattern: PatternAsNode | ErrorNode,
     ) {
         const node: PatternMappingKeyEntryNode = {
             start: keyPattern.start,

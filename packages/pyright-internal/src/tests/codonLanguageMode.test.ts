@@ -1,9 +1,10 @@
 /*
  * codonLanguageMode.test.ts
- * Copyright (c) Microsoft Corporation.
+ * Copyright (c) Codify Contributors.
  * Licensed under the MIT license.
  *
- * Unit tests for Codon language mode detection.
+ * Unit tests for Codon language mode.
+ * Note: Codify is a Codon-only tool, so all files use Codon mode.
  */
 import * as assert from 'assert';
 
@@ -23,28 +24,16 @@ test('Codon file extension is supported', () => {
     );
 });
 
-test('Python file has Python language mode', () => {
-    const filePath = combinePaths(process.cwd(), 'test_python.py');
-    const tempFile = new RealTempFile();
-    const fs = createFromRealFileSystem(tempFile);
-    const serviceProvider = createServiceProvider(tempFile, fs);
-
-    const sourceFile = new SourceFile(
-        serviceProvider,
-        Uri.file(filePath, serviceProvider),
-        () => 'test_python',
-        false,
-        false,
-        { isEditMode: false },
+test('Only .codon extension is supported', () => {
+    // Codify is Codon-only, so .py and .pyi should NOT be supported
+    assert.ok(
+        !supportedSourceFileExtensions.includes('.py'),
+        'Expected .py to NOT be in supportedSourceFileExtensions (Codify is Codon-only)',
     );
-
-    assert.strictEqual(
-        sourceFile.getLanguageMode(),
-        LanguageMode.Python,
-        'Expected Python file to have Python language mode',
+    assert.ok(
+        !supportedSourceFileExtensions.includes('.pyi'),
+        'Expected .pyi to NOT be in supportedSourceFileExtensions (Codify is Codon-only)',
     );
-
-    serviceProvider.dispose();
 });
 
 test('Codon file has Codon language mode', () => {
@@ -71,8 +60,10 @@ test('Codon file has Codon language mode', () => {
     serviceProvider.dispose();
 });
 
-test('Stub file (.pyi) has Python language mode', () => {
-    const filePath = combinePaths(process.cwd(), 'test_stub.pyi');
+test('All files use Codon mode (Codify is Codon-only)', () => {
+    // Even if we create a source file with a non-.codon extension,
+    // Codify treats all files as Codon since it's a Codon-only tool
+    const filePath = combinePaths(process.cwd(), 'any_file.txt');
     const tempFile = new RealTempFile();
     const fs = createFromRealFileSystem(tempFile);
     const serviceProvider = createServiceProvider(tempFile, fs);
@@ -80,16 +71,17 @@ test('Stub file (.pyi) has Python language mode', () => {
     const sourceFile = new SourceFile(
         serviceProvider,
         Uri.file(filePath, serviceProvider),
-        () => 'test_stub',
+        () => 'any_file',
         false,
         false,
         { isEditMode: false },
     );
 
+    // All files should use Codon mode in Codify
     assert.strictEqual(
         sourceFile.getLanguageMode(),
-        LanguageMode.Python,
-        'Expected stub file to have Python language mode',
+        LanguageMode.Codon,
+        'Expected all files to use Codon language mode in Codify',
     );
 
     serviceProvider.dispose();
@@ -97,8 +89,10 @@ test('Stub file (.pyi) has Python language mode', () => {
 
 test('LanguageMode enum values', () => {
     // Test that the LanguageMode enum has the expected values
-    assert.strictEqual(LanguageMode.Python, 'Python');
+    // Note: Python = Codon in Codify (backward compatibility alias)
     assert.strictEqual(LanguageMode.Codon, 'Codon');
+    // Python is an alias to Codon for backward compatibility
+    assert.strictEqual(LanguageMode.Python, 'Codon');
 });
 
 test('Language mode is passed through parsing pipeline', () => {
@@ -121,11 +115,7 @@ test('Language mode is passed through parsing pipeline', () => {
     );
 
     // Verify it's detected as Codon
-    assert.strictEqual(
-        sourceFile.getLanguageMode(),
-        LanguageMode.Codon,
-        'SourceFile should detect Codon language mode',
-    );
+    assert.strictEqual(sourceFile.getLanguageMode(), LanguageMode.Codon, 'SourceFile should use Codon language mode');
 
     // Import ConfigOptions and other necessary types
     const ConfigOptions = require('../common/configOptions').ConfigOptions;

@@ -2633,6 +2633,17 @@ export class Parser {
         const modName = this._parseDottedModuleName(/* allowJustDots */ true);
         const importFromNode = ImportFromNode.create(fromToken, modName);
 
+        // Codon FFI: Detect if this is a foreign function import
+        // Syntax: from C import ... or from python import ...
+        if (modName.d.leadingDots === 0 && modName.d.nameParts.length === 1) {
+            const moduleName = modName.d.nameParts[0].d.value;
+            if (moduleName === 'C') {
+                importFromNode.d.ffiSource = 'C';
+            } else if (moduleName === 'python') {
+                importFromNode.d.ffiSource = 'python';
+            }
+        }
+
         // Handle imports from __future__ specially because they can
         // change the way we interpret the rest of the file.
         const isFutureImport =
@@ -2670,6 +2681,12 @@ export class Parser {
                     trailingCommaToken = undefined;
 
                     const importFromAsNode = ImportFromAsNode.create(NameNode.create(importName));
+
+                    // Codon FFI: Parse type signature for foreign function imports
+                    // Syntax: func(int, float) -> cobj
+                    if (importFromNode.d.ffiSource && this._peekTokenType() === TokenType.OpenParenthesis) {
+                        this._parseCodonFFITypeSignature(importFromAsNode);
+                    }
 
                     if (this._consumeTokenIfKeyword(KeywordType.As)) {
                         const aliasName = this._getTokenIfIdentifier();
@@ -5413,6 +5430,56 @@ export class Parser {
                 message,
                 convertOffsetsToRange(range.start, range.start + range.length, this._tokenizerOutput!.lines),
             );
+        }
+    }
+
+    // Codon FFI: Parse type signature for foreign function imports
+    // Syntax: func(int, float, str) -> returnType
+    // Example: from C import malloc(int) -> cobj
+    // Example: from python import math.sqrt(float) -> float
+    private _parseCodonFFITypeSignature(node: ImportFromAsNode): void {
+        // Consume the opening parenthesis
+        if (!this._consumeTokenIfType(TokenType.OpenParenthesis)) {
+            return;
+        }
+
+        // Parse argument types
+        const argTypes: ExpressionNode[] = [];
+
+        if (this._peekTokenType() !== TokenType.CloseParenthesis) {
+            while (true) {
+                // Parse a type expression (could be simple like 'int' or complex like 'List[int]')
+                const typeExpr = this._parseTestExpression(/* allowAssignmentExpression */ false);
+                argTypes.push(typeExpr);
+                typeExpr.parent = node;
+
+                if (!this._consumeTokenIfType(TokenType.Comma)) {
+                    break;
+                }
+
+                // Handle trailing comma before close paren
+                if (this._peekTokenType() === TokenType.CloseParenthesis) {
+                    break;
+                }
+            }
+        }
+
+        // Consume the closing parenthesis
+        const closeParenToken = this._peekToken();
+        if (!this._consumeTokenIfType(TokenType.CloseParenthesis)) {
+            this._addSyntaxError(LocMessage.expectedCloseParen(), closeParenToken);
+        } else {
+            extendRange(node, closeParenToken);
+        }
+
+        node.d.ffiArgTypes = argTypes;
+
+        // Parse optional return type: -> returnType
+        if (this._consumeTokenIfType(TokenType.Arrow)) {
+            const returnType = this._parseTestExpression(/* allowAssignmentExpression */ false);
+            node.d.ffiReturnType = returnType;
+            returnType.parent = node;
+            extendRange(node, returnType);
         }
     }
 }

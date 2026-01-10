@@ -1,10 +1,11 @@
 /*
  * sourceFile.ts
  * Copyright (c) Microsoft Corporation.
+ * Copyright (c) Codify Contributors.
  * Licensed under the MIT license.
  * Author: Eric Traut
  *
- * Class that represents a single Python source or stub file.
+ * Class that represents a single Codon source file.
  */
 
 import { isMainThread } from 'worker_threads';
@@ -250,7 +251,7 @@ export class SourceFile {
     // the file is parsed.
     private _diagnosticRuleSet = getBasicDiagnosticRuleSet();
 
-    // Indicate what language mode this file is in (Python or Codon).
+    // Language mode for this file (Codon only - Codify is a Codon-only tool).
     private _languageMode: LanguageMode;
 
     // Indicate whether this file is for ipython or not.
@@ -318,9 +319,8 @@ export class SourceFile {
         this._logTracker = logTracker ?? new LogTracker(console, isMainThread ? 'FG' : 'BG');
         this._ipythonMode = ipythonMode ?? IPythonMode.None;
 
-        // Detect language mode by file extension (defensive coding)
-        const hasCodonExtension = this._uri?.hasExtension('.codon') ?? false;
-        this._languageMode = hasCodonExtension ? LanguageMode.Codon : LanguageMode.Python;
+        // Codify only supports Codon files - always use Codon mode
+        this._languageMode = LanguageMode.Codon;
     }
 
     getLanguageMode(): LanguageMode {
@@ -741,7 +741,7 @@ export class SourceFile {
                     this._uri,
                     fileContents!,
                     this._ipythonMode !== IPythonMode.None,
-                    this._languageMode ?? LanguageMode.Python, // Defensive: safe default
+                    this._languageMode ?? LanguageMode.Codon, // Defensive: safe default
                     diagSink,
                 );
 
@@ -1519,7 +1519,7 @@ export class SourceFile {
 
         const parseOptions = new ParseOptions();
         parseOptions.useNotebookMode = useNotebookMode;
-        parseOptions.languageMode = languageMode ?? LanguageMode.Python; // Defensive: safe default
+        parseOptions.languageMode = languageMode ?? LanguageMode.Codon; // Defensive: safe default
         if (fileUri.pathEndsWith('pyi')) {
             parseOptions.isStubFile = true;
         }

@@ -1,19 +1,22 @@
 /*
  * languageMode.ts
- * Copyright (c) Microsoft Corporation.
+ * Copyright (c) Codify Contributors.
  * Licensed under the MIT license.
  *
- * Defines the language mode enum for distinguishing between Python and Codon files.
- * Extracted to separate file to avoid circular dependencies between sourceFile and parser.
+ * Since Codify is exclusively for Codon, this file is simplified.
+ * All files are treated as Codon source files.
  */
 
 /**
- * Indicates the language mode for a source file.
+ * Language mode for source files.
+ * Codify only supports Codon.
  *
- * - Python: Standard Python source files (.py, .pyi)
- * - Codon: Codon source files (.codon)
+ * Note: Python is included as an alias for backward compatibility during
+ * the migration period. It maps to Codon since Codify is Codon-only.
  */
 export enum LanguageMode {
-    Python = 'Python',
     Codon = 'Codon',
+    // Python is kept as an alias to Codon for backward compatibility
+    // This allows existing code that references LanguageMode.Python to still compile
+    Python = 'Codon',
 }
