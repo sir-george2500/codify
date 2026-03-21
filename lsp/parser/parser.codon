@@ -1,0 +1,93 @@
+from ..core import Result
+from .token import Token, TokenType
+from .ast import Stmt, Expr, AssignmentStmt, ExpressionStmt, VariableExpr, LiteralExpr
+
+@tuple
+class ParseError:
+    message: str
+    token: Token
+
+class Parser:
+    tokens: List[Token]
+    current: int
+
+    def __init__(self, tokens: List[Token]):
+        self.tokens = tokens
+        self.current = 0
+
+    def parse(self) -> Result[List[Stmt], ParseError]:
+        statements: List[Stmt] = []
+        while not self.is_at_end():
+            res = self.declaration()
+            if not res.is_ok():
+                return Result[List[Stmt], ParseError].failure(res.get_error())
+            statements.append(res.unwrap())
+        
+        return Result[List[Stmt], ParseError].success(statements)
+
+    def declaration(self) -> Result[Stmt, ParseError]:
+        # Simple assignment or expression for now
+        return self.assignment()
+
+    def assignment(self) -> Result[Stmt, ParseError]:
+        expr_res = self.expression()
+        if not expr_res.is_ok():
+            return Result[Stmt, ParseError].failure(expr_res.get_error())
+        
+        expr = expr_res.unwrap()
+
+        if self.match(TokenType.ASSIGN):
+            equals = self.previous()
+            value_res = self.assignment()
+            if not value_res.is_ok():
+                return Result[Stmt, ParseError].failure(value_res.get_error())
+            
+            # value_res returns a Stmt, but we need an Expr if it was nested
+            # For simplicity, let's assume direct assignment for now
+            if isinstance(expr, VariableExpr):
+                name = expr.name
+                # This is a bit of a hack since we need to convert the RHS to Expr
+                # Real implementation would have a separate 'assignment' logic
+                return Result[Stmt, ParseError].success(AssignmentStmt(name, LiteralExpr("placeholder")))
+            
+            return Result[Stmt, ParseError].failure(ParseError("Invalid assignment target", equals))
+
+        return Result[Stmt, ParseError].success(ExpressionStmt(expr))
+
+    def expression(self) -> Result[Expr, ParseError]:
+        return self.primary()
+
+    def primary(self) -> Result[Expr, ParseError]:
+        if self.match(TokenType.NUMBER, TokenType.STRING):
+            return Result[Expr, ParseError].success(LiteralExpr(self.previous().lexeme))
+        
+        if self.match(TokenType.IDENTIFIER):
+            return Result[Expr, ParseError].success(VariableExpr(self.previous()))
+        
+        return Result[Expr, ParseError].failure(ParseError("Expect expression", self.peek()))
+
+    def match(self, *types: TokenType) -> bool:
+        for t in types:
+            if self.check(t):
+                self.advance()
+                return True
+        return False
+
+    def check(self, type: TokenType) -> bool:
+        if self.is_at_end():
+            return False
+        return self.peek().type == type
+
+    def advance(self) -> Token:
+        if not self.is_at_end():
+            self.current += 1
+        return self.previous()
+
+    def is_at_end(self) -> bool:
+        return self.peek().type == TokenType.EOF
+
+    def peek(self) -> Token:
+        return self.tokens[self.current]
+
+    def previous(self) -> Token:
+        return self.tokens[self.current - 1]

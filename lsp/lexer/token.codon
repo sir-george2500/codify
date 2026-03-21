@@ -1,0 +1,49 @@
+from enum import Enum
+
+class TokenType(Enum):
+    # Keywords
+    DEF = "def"
+    CLASS = "class"
+    IF = "if"
+    ELSE = "else"
+    FOR = "for"
+    IN = "in"
+    WHILE = "while"
+    RETURN = "return"
+    IMPORT = "import"
+    FROM = "from"
+    
+    # Literals
+    IDENTIFIER = "identifier"
+    NUMBER = "number"
+    STRING = "string"
+    
+    # Operators
+    ASSIGN = "="
+    PLUS = "+"
+    MINUS = "-"
+    STAR = "*"
+    SLASH = "/"
+    
+    # Delimiters
+    LPAREN = "("
+    RPAREN = ")"
+    LBRACE = "{"
+    RBRACE = "}"
+    LBRACKET = "["
+    RBRACKET = "]"
+    COLON = ":"
+    COMMA = ","
+    NEWLINE = "newline"
+    INDENT = "indent"
+    DEDENT = "dedent"
+    
+    # Eof
+    EOF = "eof"
+
+@tuple
+class Token:
+    type: TokenType
+    lexeme: str
+    line: int
+    column: int

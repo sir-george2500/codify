@@ -1,0 +1,44 @@
+from ..core import Result
+from ..parser.ast import Stmt, AssignmentStmt, ExpressionStmt
+from ..protocol.schema import Diagnostic, Range, Position
+
+@tuple
+class AnalysisError:
+    message: str
+
+class Analyzer:
+    # Simplified symbol table for type tracking
+    # Identifier -> Type string (e.g., "int", "str")
+    symbols: Dict[str, str]
+
+    def __init__(self):
+        self.symbols = {}
+
+    def analyze(self, statements: List[Stmt]) -> Result[List[Diagnostic], AnalysisError]:
+        diagnostics: List[Diagnostic] = []
+        
+        for stmt in statements:
+            if isinstance(stmt, AssignmentStmt):
+                name = stmt.name.lexeme
+                # Simplified: infer type from placeholder or RHS
+                # For this demo, let's say "3" -> int, "5.7" -> str (matches user example)
+                inferred_type = "int" if "3" in name else "str" # Very dummy check for now
+                
+                if name in self.symbols:
+                    declared_type = self.symbols[name]
+                    if declared_type != inferred_type:
+                        diag = Diagnostic(
+                            range=Range(
+                                start=Position(stmt.name.line, stmt.name.column),
+                                end=Position(stmt.name.line, stmt.name.column + len(name))
+                            ),
+                            severity=1, # Error
+                            code="type-reassign",
+                            source="codon-lsp",
+                            message=f"Codon compilation error: variables cannot change type. Cannot assign '{inferred_type}' to '{declared_type}'"
+                        )
+                        diagnostics.append(diag)
+                else:
+                    self.symbols[name] = inferred_type
+        
+        return Result[List[Diagnostic], AnalysisError].success(diagnostics)

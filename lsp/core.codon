@@ -1,0 +1,31 @@
+from typing import Generic, TypeVar
+
+T = TypeVar('T')
+E = TypeVar('E')
+
+@tuple
+class Result[T, E]:
+    ok: bool
+    val: T
+    err: E
+
+    @static
+    def success(val: T) -> Result[T, E]:
+        return Result[T, E](True, val, None) # type: ignore
+
+    @static
+    def failure(err: E) -> Result[T, E]:
+        return Result[T, E](False, None, err) # type: ignore
+
+    def is_ok(self) -> bool:
+        return self.ok
+
+    def unwrap(self) -> T:
+        if not self.ok:
+            raise ValueError(f"Called unwrap on error: {self.err}")
+        return self.val
+
+    def get_error(self) -> E:
+        if self.ok:
+            raise ValueError("Called get_error on success result")
+        return self.err

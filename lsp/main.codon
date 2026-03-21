@@ -1,0 +1,50 @@
+from .core import Result
+from .lexer.scanner import Scanner
+from .parser.parser import Parser
+from .analyzer.checker import Analyzer
+from .protocol.schema import Diagnostic
+
+class CodonLSP:
+    analyzer: Analyzer
+
+    def __init__(self):
+        self.analyzer = Analyzer()
+
+    def process_document(self, source: str) -> Result[List[Diagnostic], str]:
+        # 1. Lexing
+        scanner = Scanner(source)
+        tokens_res = scanner.scan_tokens()
+        if not tokens_res.is_ok():
+            return Result[List[Diagnostic], str].failure(f"Lexer Error: {tokens_res.get_error()}")
+        
+        # 2. Parsing
+        parser = Parser(tokens_res.unwrap())
+        stmts_res = parser.parse()
+        if not stmts_res.is_ok():
+            return Result[List[Diagnostic], str].failure(f"Parser Error: {stmts_res.get_error()}")
+        
+        # 3. Analyzing
+        diag_res = self.analyzer.analyze(stmts_res.unwrap())
+        if not diag_res.is_ok():
+            return Result[List[Diagnostic], str].failure(f"Analyzer Error: {diag_res.get_error()}")
+        
+        return Result[List[Diagnostic], str].success(diag_res.unwrap())
+
+def main():
+    # Simple test driver
+    source = """i = 3
+i = "5.7"
+"""
+    lsp = CodonLSP()
+    res = lsp.process_document(source)
+    
+    if res.is_ok():
+        diags = res.unwrap()
+        print(f"Analysis complete. Found {len(diags)} diagnostics.")
+        for d in diags:
+            print(f"[{d.code}] {d.message} at line {d.range.start.line}")
+    else:
+        print(f"LSP Error: {res.get_error()}")
+
+if __name__ == "__main__":
+    main()

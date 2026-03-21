@@ -1,0 +1,32 @@
+from .token import Token
+
+@tuple
+class Expr:
+    pass
+
+@tuple
+class BinaryExpr(Expr):
+    left: Expr
+    operator: Token
+    right: Expr
+
+@tuple
+class LiteralExpr(Expr):
+    value: str # Simplified, should be a variant
+
+@tuple
+class VariableExpr(Expr):
+    name: Token
+
+@tuple
+class Stmt:
+    pass
+
+@tuple
+class AssignmentStmt(Stmt):
+    name: Token
+    value: Expr
+
+@tuple
+class ExpressionStmt(Stmt):
+    expression: Expr

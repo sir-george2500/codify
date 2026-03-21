@@ -1,0 +1,17 @@
+@tuple
+class Position:
+    line: int
+    character: int
+
+@tuple
+class Range:
+    start: Position
+    end: Position
+
+@tuple
+class Diagnostic:
+    range: Range
+    severity: int
+    code: str
+    source: str
+    message: str
