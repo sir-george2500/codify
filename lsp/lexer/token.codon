@@ -1,6 +1,4 @@
-from enum import Enum
-
-class TokenType(Enum):
+class TokenType:
     # Keywords
     DEF = "def"
     CLASS = "class"
@@ -12,6 +10,12 @@ class TokenType(Enum):
     RETURN = "return"
     IMPORT = "import"
     FROM = "from"
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+    TRUE = "True"
+    FALSE = "False"
+    NONE = "None"
     
     # Literals
     IDENTIFIER = "identifier"
@@ -24,6 +28,14 @@ class TokenType(Enum):
     MINUS = "-"
     STAR = "*"
     SLASH = "/"
+    EQ = "=="
+    NEQ = "!="
+    LT = "<"
+    GT = ">"
+    LTE = "<="
+    GTE = ">="
+    ARROW = "->"
+    DOT = "."
     
     # Delimiters
     LPAREN = "("
@@ -43,7 +55,7 @@ class TokenType(Enum):
 
 @tuple
 class Token:
-    type: TokenType
+    tok_type: str
     lexeme: str
     line: int
     column: int

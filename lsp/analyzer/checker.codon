@@ -1,5 +1,5 @@
 from ..core import Result
-from ..parser.ast import Stmt, AssignmentStmt, ExpressionStmt
+from ..parser.ast import Stmt, AssignmentStmt, ExpressionStmt, LiteralExpr, VariableExpr, BinaryExpr, Expr
 from ..protocol.schema import Diagnostic, Range, Position
 
 @tuple
@@ -7,8 +7,6 @@ class AnalysisError:
     message: str
 
 class Analyzer:
-    # Simplified symbol table for type tracking
-    # Identifier -> Type string (e.g., "int", "str")
     symbols: Dict[str, str]
 
     def __init__(self):
@@ -18,19 +16,20 @@ class Analyzer:
         diagnostics: List[Diagnostic] = []
         
         for stmt in statements:
-            if isinstance(stmt, AssignmentStmt):
-                name = stmt.name.lexeme
-                # Simplified: infer type from placeholder or RHS
-                # For this demo, let's say "3" -> int, "5.7" -> str (matches user example)
-                inferred_type = "int" if "3" in name else "str" # Very dummy check for now
+            if stmt.kind == "assignment":
+                ast = stmt.assignment
+                if ast is None: continue
+                
+                name = ast.name.lexeme
+                inferred_type = self.infer_type(ast.value)
                 
                 if name in self.symbols:
                     declared_type = self.symbols[name]
-                    if declared_type != inferred_type:
+                    if declared_type != inferred_type and inferred_type != "unknown":
                         diag = Diagnostic(
                             range=Range(
-                                start=Position(stmt.name.line, stmt.name.column),
-                                end=Position(stmt.name.line, stmt.name.column + len(name))
+                                start=Position(ast.name.line, ast.name.column),
+                                end=Position(ast.name.line, ast.name.column + len(name))
                             ),
                             severity=1, # Error
                             code="type-reassign",
@@ -39,6 +38,32 @@ class Analyzer:
                         )
                         diagnostics.append(diag)
                 else:
-                    self.symbols[name] = inferred_type
+                    if inferred_type != "unknown":
+                        self.symbols[name] = inferred_type
         
         return Result[List[Diagnostic], AnalysisError].success(diagnostics)
+
+    def infer_type(self, expr: Expr) -> str:
+        if expr.kind == "literal":
+            lit = expr.literal
+            if lit is None: return "unknown"
+            val = lit.value
+            if val.startswith('"') or val.startswith("'"):
+                return "str"
+            elif "." in val:
+                return "float"
+            else:
+                return "int"
+        elif expr.kind == "variable":
+            var = expr.variable
+            if var is None: return "unknown"
+            name = var.name.lexeme
+            if name in self.symbols:
+                return self.symbols[name]
+            return "unknown"
+        elif expr.kind == "binary":
+            binex = expr.binary
+            if binex is None: return "unknown"
+            return self.infer_type(binex.left)
+            
+        return "unknown"

@@ -17,5 +17,7 @@
         "dist",
         "out",
         "debug.js",
+        "run_test.js",
+        "**/*.config.js"
     ]
 }

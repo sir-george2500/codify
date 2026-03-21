@@ -1,32 +1,80 @@
-from .token import Token
+from ..lexer.token import Token
+from typing import Optional
 
-@tuple
-class Expr:
-    pass
+class LiteralExpr:
+    value: str 
+    def __init__(self, value: str):
+        self.value = value
 
-@tuple
-class BinaryExpr(Expr):
-    left: Expr
-    operator: Token
-    right: Expr
-
-@tuple
-class LiteralExpr(Expr):
-    value: str # Simplified, should be a variant
-
-@tuple
-class VariableExpr(Expr):
+class VariableExpr:
     name: Token
+    def __init__(self, name: Token):
+        self.name = name
 
-@tuple
-class Stmt:
-    pass
+class BinaryExpr[T]:
+    left: T
+    operator: Token
+    right: T
+    def __init__(self, left: T, operator: Token, right: T):
+        self.left = left
+        self.operator = operator
+        self.right = right
 
-@tuple
-class AssignmentStmt(Stmt):
+class Expr:
+    kind: str
+    literal: Optional[LiteralExpr]
+    variable: Optional[VariableExpr]
+    binary: Optional[BinaryExpr[Expr]]
+
+    def __init__(self, kind: str):
+        self.kind = kind
+        self.literal = None
+        self.variable = None
+        self.binary = None
+
+    def create_literal(e: LiteralExpr) -> Expr:
+        ex = Expr("literal")
+        ex.literal = e
+        return ex
+
+    def create_variable(e: VariableExpr) -> Expr:
+        ex = Expr("variable")
+        ex.variable = e
+        return ex
+
+    def create_binary(e: BinaryExpr[Expr]) -> Expr:
+        ex = Expr("binary")
+        ex.binary = e
+        return ex
+
+class AssignmentStmt:
     name: Token
     value: Expr
+    def __init__(self, name: Token, value: Expr):
+        self.name = name
+        self.value = value
 
-@tuple
-class ExpressionStmt(Stmt):
+class ExpressionStmt:
     expression: Expr
+    def __init__(self, expression: Expr):
+        self.expression = expression
+
+class Stmt:
+    kind: str
+    assignment: Optional[AssignmentStmt]
+    expression: Optional[ExpressionStmt]
+
+    def __init__(self, kind: str):
+        self.kind = kind
+        self.assignment = None
+        self.expression = None
+
+    def create_assignment(s: AssignmentStmt) -> Stmt:
+        st = Stmt("assignment")
+        st.assignment = s
+        return st
+
+    def create_expression(s: ExpressionStmt) -> Stmt:
+        st = Stmt("expression")
+        st.expression = s
+        return st

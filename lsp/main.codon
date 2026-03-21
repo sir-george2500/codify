@@ -32,8 +32,8 @@ class CodonLSP:
 
 def main():
     # Simple test driver
-    source = """i = 3
-i = "5.7"
+    source = """i = 3.4
+i = "String"
 """
     lsp = CodonLSP()
     res = lsp.process_document(source)

@@ -1,0 +1,13 @@
+# test_types.codon
+
+x: Int[64] = Int[64](10)
+y: UInt[8] = UInt[8](5)
+b: byte = byte(10)
+p: cobj = cobj()
+
+def add(a: Int[64], b: Int[64]) -> Int[64]:
+    return a + b
+
+def check_compat(i: int, i64: Int[64]):
+    x: Int[64] = i
+    y: int = i64

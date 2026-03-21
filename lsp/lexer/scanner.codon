@@ -14,6 +14,7 @@ class Scanner:
     current: int
     line: int
     column: int
+    indent_stack: List[int]
 
     def __init__(self, source: str):
         self.source = source
@@ -22,6 +23,7 @@ class Scanner:
         self.current = 0
         self.line = 1
         self.column = 1
+        self.indent_stack = [0]
 
     def scan_tokens(self) -> Result[List[Token], LexError]:
         while not self.is_at_end():
@@ -30,33 +32,98 @@ class Scanner:
             if not res.is_ok():
                 return Result[List[Token], LexError].failure(res.get_error())
         
+        # Handle remaining dedents
+        while len(self.indent_stack) > 1:
+            self.indent_stack.pop()
+            self.add_token(TokenType.DEDENT)
+            
         self.tokens.append(Token(TokenType.EOF, "", self.line, self.column))
         return Result[List[Token], LexError].success(self.tokens)
 
     def scan_token(self) -> Result[bool, LexError]:
         c = self.advance()
+        
         if c == '(':
             self.add_token(TokenType.LPAREN)
         elif c == ')':
             self.add_token(TokenType.RPAREN)
-        elif c == ':':
-            self.add_token(TokenType.COLON)
-        elif c == '=':
-            self.add_token(TokenType.ASSIGN)
+        elif c == '{':
+            self.add_token(TokenType.LBRACE)
+        elif c == '}':
+            self.add_token(TokenType.RBRACE)
+        elif c == '[':
+            self.add_token(TokenType.LBRACKET)
+        elif c == ']':
+            self.add_token(TokenType.RBRACKET)
+        elif c == ',':
+            self.add_token(TokenType.COMMA)
+        elif c == '.':
+            self.add_token(TokenType.DOT)
         elif c == '+':
             self.add_token(TokenType.PLUS)
         elif c == '-':
-            self.add_token(TokenType.MINUS)
+            if self.match('>'):
+                self.add_token(TokenType.ARROW)
+            else:
+                self.add_token(TokenType.MINUS)
         elif c == '*':
             self.add_token(TokenType.STAR)
+        elif c == ':':
+            self.add_token(TokenType.COLON)
+        elif c == '!':
+            if self.match('='):
+                self.add_token(TokenType.NEQ)
+            else:
+                return Result[bool, LexError].failure(LexError("Unexpected character '!'", self.line, self.column))
+        elif c == '=':
+            if self.match('='):
+                self.add_token(TokenType.EQ)
+            else:
+                self.add_token(TokenType.ASSIGN)
+        elif c == '<':
+            if self.match('='):
+                self.add_token(TokenType.LTE)
+            else:
+                self.add_token(TokenType.LT)
+        elif c == '>':
+            if self.match('='):
+                self.add_token(TokenType.GTE)
+            else:
+                self.add_token(TokenType.GT)
         elif c == '/':
             self.add_token(TokenType.SLASH)
+        elif c == '#':
+            while self.peek() != '\n' and not self.is_at_end():
+                self.advance()
         elif c == ' ' or c == '\r' or c == '\t':
             pass
         elif c == '\n':
             self.add_token(TokenType.NEWLINE)
             self.line += 1
             self.column = 1
+            
+            # Indentation logic
+            spaces = 0
+            while self.peek() == ' ' or self.peek() == '\t':
+                ch = self.advance()
+                if ch == ' ':
+                    spaces += 1
+                elif ch == '\t':
+                    spaces += 4
+            
+            if self.peek() != '\n' and self.peek() != '#':
+                current_indent = self.indent_stack[-1]
+                if spaces > current_indent:
+                    self.indent_stack.append(spaces)
+                    self.add_token(TokenType.INDENT)
+                elif spaces < current_indent:
+                    while len(self.indent_stack) > 0 and self.indent_stack[-1] > spaces:
+                        self.indent_stack.pop()
+                        self.add_token(TokenType.DEDENT)
+                    if len(self.indent_stack) > 0 and self.indent_stack[-1] != spaces:
+                        return Result[bool, LexError].failure(LexError("Indentation error", self.line, self.column))
+        elif c == '"' or c == "'":
+            return self.string(c)
         else:
             if self.is_digit(c):
                 return self.number()
@@ -67,13 +134,45 @@ class Scanner:
         
         return Result[bool, LexError].success(True)
 
+    def string(self, quote: str) -> Result[bool, LexError]:
+        while self.peek() != quote and not self.is_at_end():
+            if self.peek() == '\n':
+                self.line += 1
+                self.column = 1
+            self.advance()
+            
+        if self.is_at_end():
+            return Result[bool, LexError].failure(LexError("Unterminated string", self.line, self.column))
+            
+        self.advance() 
+        self.add_token(TokenType.STRING)
+        return Result[bool, LexError].success(True)
+
     def identifier(self) -> Result[bool, LexError]:
         while self.is_alpha_numeric(self.peek()):
             self.advance()
         
         text = self.source[self.start:self.current]
-        # In a real implementation, check for keywords here
-        self.add_token(TokenType.IDENTIFIER)
+        tok = TokenType.IDENTIFIER
+        
+        if text == "def": tok = TokenType.DEF
+        elif text == "class": tok = TokenType.CLASS
+        elif text == "if": tok = TokenType.IF
+        elif text == "else": tok = TokenType.ELSE
+        elif text == "for": tok = TokenType.FOR
+        elif text == "in": tok = TokenType.IN
+        elif text == "while": tok = TokenType.WHILE
+        elif text == "return": tok = TokenType.RETURN
+        elif text == "import": tok = TokenType.IMPORT
+        elif text == "from": tok = TokenType.FROM
+        elif text == "and": tok = TokenType.AND
+        elif text == "or": tok = TokenType.OR
+        elif text == "not": tok = TokenType.NOT
+        elif text == "True": tok = TokenType.TRUE
+        elif text == "False": tok = TokenType.FALSE
+        elif text == "None": tok = TokenType.NONE
+
+        self.add_token(tok)
         return Result[bool, LexError].success(True)
 
     def number(self) -> Result[bool, LexError]:
@@ -87,6 +186,15 @@ class Scanner:
         
         self.add_token(TokenType.NUMBER)
         return Result[bool, LexError].success(True)
+
+    def match(self, expected: str) -> bool:
+        if self.is_at_end():
+            return False
+        if self.source[self.current] != expected:
+            return False
+        self.current += 1
+        self.column += 1
+        return True
 
     def is_at_end(self) -> bool:
         return self.current >= len(self.source)
@@ -116,6 +224,6 @@ class Scanner:
     def is_alpha_numeric(self, c: str) -> bool:
         return self.is_alpha(c) or self.is_digit(c)
 
-    def add_token(self, type: TokenType):
+    def add_token(self, tok_type: str):
         text = self.source[self.start:self.current]
-        self.tokens.append(Token(type, text, self.line, self.column - len(text)))
+        self.tokens.append(Token(tok_type, text, self.line, self.column - len(text)))

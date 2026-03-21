@@ -1,0 +1,156 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Codon",
+    "scopeName": "source.codon",
+    "fileTypes": [".codon"],
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#decorators" },
+        { "include": "#keywords" },
+        { "include": "#codon-types" },
+        { "include": "#builtin-constants" },
+        { "include": "#function-definition" },
+        { "include": "#class-definition" },
+        { "include": "#numbers" },
+        { "include": "#operators" }
+    ],
+    "repository": {
+        "comments": {
+            "name": "comment.line.number-sign.codon",
+            "match": "#.*$"
+        },
+        "strings": {
+            "patterns": [
+                {
+                    "name": "string.quoted.triple.double.codon",
+                    "begin": "\"\"\"",
+                    "end": "\"\"\"",
+                    "patterns": [{ "include": "#string-escape" }]
+                },
+                {
+                    "name": "string.quoted.triple.single.codon",
+                    "begin": "'''",
+                    "end": "'''",
+                    "patterns": [{ "include": "#string-escape" }]
+                },
+                {
+                    "name": "string.quoted.double.codon",
+                    "begin": "\"",
+                    "end": "\"",
+                    "patterns": [
+                        { "include": "#string-escape" },
+                        { "include": "#fstring-expression" }
+                    ]
+                },
+                {
+                    "name": "string.quoted.single.codon",
+                    "begin": "'",
+                    "end": "'",
+                    "patterns": [{ "include": "#string-escape" }]
+                }
+            ]
+        },
+        "string-escape": {
+            "name": "constant.character.escape.codon",
+            "match": "\\\\."
+        },
+        "fstring-expression": {
+            "name": "meta.embedded.expression.codon",
+            "begin": "\\{",
+            "end": "\\}",
+            "beginCaptures": { "0": { "name": "punctuation.definition.template-expression.begin.codon" } },
+            "endCaptures": { "0": { "name": "punctuation.definition.template-expression.end.codon" } }
+        },
+        "decorators": {
+            "patterns": [
+                {
+                    "name": "storage.type.function.decorator.codon",
+                    "match": "@(python|tuple|extend|par|codon\\.jit|llvm|property|staticmethod|classmethod|overload)\\b"
+                },
+                {
+                    "name": "storage.type.function.decorator.codon",
+                    "match": "@[A-Za-z_][A-Za-z0-9_.]*"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.codon",
+                    "match": "\\b(if|elif|else|for|while|break|continue|return|yield|pass|raise|try|except|finally|with|match|case)\\b"
+                },
+                {
+                    "name": "keyword.other.codon",
+                    "match": "\\b(import|from|as|global|nonlocal|del|assert|lambda|async|await)\\b"
+                },
+                {
+                    "name": "keyword.operator.logical.codon",
+                    "match": "\\b(and|or|not|in|is)\\b"
+                },
+                {
+                    "name": "storage.type.codon",
+                    "match": "\\b(def|class|type)\\b"
+                }
+            ]
+        },
+        "codon-types": {
+            "patterns": [
+                {
+                    "name": "support.type.codon",
+                    "match": "\\b(Int|UInt)\\[\\d+\\]"
+                },
+                {
+                    "name": "support.type.codon",
+                    "match": "\\bFloat\\[(?:32|64)\\]"
+                },
+                {
+                    "name": "support.type.codon",
+                    "match": "\\bcobj\\b"
+                },
+                {
+                    "name": "support.type.codon",
+                    "match": "\\b(int|float|str|bool|byte|list|dict|set|tuple|optional|Optional|List|Dict|Set|Tuple|Union|Any)\\b"
+                }
+            ]
+        },
+        "builtin-constants": {
+            "name": "constant.language.codon",
+            "match": "\\b(True|False|None)\\b"
+        },
+        "function-definition": {
+            "match": "\\b(def)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+            "captures": {
+                "1": { "name": "storage.type.function.codon" },
+                "2": { "name": "entity.name.function.codon" }
+            }
+        },
+        "class-definition": {
+            "match": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+            "captures": {
+                "1": { "name": "storage.type.class.codon" },
+                "2": { "name": "entity.name.type.class.codon" }
+            }
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.float.codon",
+                    "match": "\\b[0-9]+\\.[0-9]*([eE][+-]?[0-9]+)?\\b"
+                },
+                {
+                    "name": "constant.numeric.hex.codon",
+                    "match": "\\b0[xX][0-9A-Fa-f]+\\b"
+                },
+                {
+                    "name": "constant.numeric.integer.codon",
+                    "match": "\\b[0-9]+\\b"
+                }
+            ]
+        },
+        "operators": {
+            "name": "keyword.operator.codon",
+            "match": "->|:=|==|!=|<=|>=|\\+=|-=|\\*=|/=|//=|%=|\\*\\*=|&=|\\|=|\\^=|>>|<<|\\*\\*|//|[+\\-*/%&|^~<>=]"
+        }
+    }
+}

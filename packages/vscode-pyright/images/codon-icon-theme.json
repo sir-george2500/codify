@@ -1,0 +1,13 @@
+{
+    "iconDefinitions": {
+        "_codon": {
+            "iconPath": "./codon.svg"
+        }
+    },
+    "fileExtensions": {
+        "codon": "_codon"
+    },
+    "languageIds": {
+        "codon": "_codon"
+    }
+}

@@ -7573,9 +7573,9 @@ export function createTypeEvaluator(
         const diag = new DiagnosticAddendum();
 
         typeParams.forEach((param, index) => {
-            if (isParamSpec(param) && index < typeArgs.length) {
-                const typeArgType = typeArgs[index].type;
-                const typeList = typeArgs[index].typeList;
+            if (isParamSpec(param) && index < typeArgs!.length) {
+                const typeArgType = typeArgs![index].type;
+                const typeList = typeArgs![index].typeList;
 
                 if (typeList) {
                     const functionType = FunctionType.createSynthesizedInstance('', FunctionTypeFlags.ParamSpecValue);
@@ -7666,27 +7666,27 @@ export function createTypeEvaluator(
                     addDiagnostic(
                         DiagnosticRule.reportInvalidTypeForm,
                         LocMessage.typeArgListExpected(),
-                        typeArgs[index].node
+                        typeArgs![index].node
                     );
                     reportedError = true;
                 }
             } else {
-                if (index < typeArgs.length && typeArgs[index].typeList) {
+                if (index < typeArgs!.length && typeArgs![index].typeList) {
                     addDiagnostic(
                         DiagnosticRule.reportInvalidTypeForm,
                         LocMessage.typeArgListNotAllowed(),
-                        typeArgs[index].node
+                        typeArgs![index].node
                     );
                     reportedError = true;
                 }
 
                 let typeArgType: Type;
-                if (index < typeArgs.length) {
-                    typeArgType = convertToInstance(typeArgs[index].type);
+                if (index < typeArgs!.length) {
+                    typeArgType = convertToInstance(typeArgs![index].type);
                 } else if (param.shared.isDefaultExplicit) {
                     typeArgType = solveAndApplyConstraints(param, constraints, {
                         replaceUnsolved: {
-                            scopeIds: [aliasInfo.shared.typeVarScopeId],
+                            scopeIds: [aliasInfo!.shared.typeVarScopeId],
                             tupleClassType: getTupleClassType(),
                         },
                     });
@@ -7707,7 +7707,7 @@ export function createTypeEvaluator(
                                     typeAliasParam: printType(typeParams[index]),
                                 })
                             );
-                            messageDiag.addTextRange(typeArgs[index].node);
+                            messageDiag.addTextRange(typeArgs![index].node);
                         }
                     }
                 }
@@ -7715,7 +7715,7 @@ export function createTypeEvaluator(
                 if (isUnpacked(typeArgType) && !isTypeVarTuple(param)) {
                     const messageDiag = diag.createAddendum();
                     messageDiag.addMessage(LocMessage.unpackedArgInTypeArgument());
-                    messageDiag.addTextRange(typeArgs[index].node);
+                    messageDiag.addTextRange(typeArgs![index].node);
                     typeArgType = UnknownType.create();
                 }
 
@@ -10091,7 +10091,7 @@ export function createTypeEvaluator(
         const newExpandedArgTypes: (Type | undefined)[][] = [];
 
         expandedArgTypes.forEach((preExpandedTypes) => {
-            expandedTypes.forEach((subtype) => {
+            expandedTypes!.forEach((subtype) => {
                 const expandedTypes = [...preExpandedTypes];
                 expandedTypes[indexToExpand] = subtype;
                 newExpandedArgTypes.push(expandedTypes);
@@ -19019,7 +19019,7 @@ export function createTypeEvaluator(
 
             const newDecoratedType = useSignatureTracker(node.parent ?? node, () => {
                 assert(decoratedType !== undefined);
-                return applyFunctionDecorator(evaluatorInterface, decoratedType, functionType, decorator, node);
+                return applyFunctionDecorator(evaluatorInterface, decoratedType!, functionType, decorator, node);
             });
 
             const unknownOrAny = containsAnyOrUnknown(newDecoratedType, /* recurse */ false);
@@ -25771,8 +25771,8 @@ export function createTypeEvaluator(
                     ? subtype.priv.typeArgs[0]
                     : UnknownType.create();
 
-            if (assignType(destTypeFormType, srcTypeFormType)) {
-                resultType = ClassType.specialize(subtype, [srcTypeFormType]);
+            if (assignType(destTypeFormType, srcTypeFormType!)) {
+                resultType = ClassType.specialize(subtype, [srcTypeFormType!]);
             }
         });
 

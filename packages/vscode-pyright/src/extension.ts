@@ -101,6 +101,8 @@ export async function activate(context: ExtensionContext) {
         documentSelector: [
             { scheme: 'file', language: 'python' },
             { scheme: 'untitled', language: 'python' },
+            { scheme: 'file', language: 'codon' },
+            { scheme: 'untitled', language: 'codon' },
         ],
         synchronize: {
             // Synchronize the setting section to the server.

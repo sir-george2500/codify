@@ -1,0 +1,19 @@
+# test_generics.codon
+# Test Codon's generic syntax
+
+def identity[T](x: T) -> T:
+    return x
+
+def pair[T, U](a: T, b: U) -> tuple[T, U]:
+    return (a, b)
+
+class Container[T]:
+    def __init__(self, value: T):
+        self.value = value
+    
+    def get(self) -> T:
+        return self.value
+
+# Usage
+result = identity(42)
+c = Container(10)
