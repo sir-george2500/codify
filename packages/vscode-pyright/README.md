@@ -1,11 +1,15 @@
-# Static Type Checker for Python
+# Codify (Codon Language Server)
 
-Pyright is a full-featured, standards-based static type checker for Python. It is designed for high performance and can be used with large Python source bases.
+Codify is the official Visual Studio Code extension for the **Codon** programming language, a high-performance Python compiler that uses strict static typing.
 
-Pyright includes both a [command-line tool](/docs/command-line.md) and an [extension for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-pyright.pyright).
+Built as a fork of Pyright, Codify is modified to deeply integrate with Codon's compilation targets and provide strict typing safety nets directly in your editor.
 
-For most VS Code users, we recommend using the Pylance extension rather than Pyright. Pylance incorporates the Pyright type checker but features additional capabilities such as semantic token highlighting and symbol indexing. When Pylance is installed, the Pyright extension will disable itself.
+## Features Added for Codon
+
+* **Strict Type Mutation Enforcement**: Codon variables cannot change their type once initialized. Codify enforces this by injecting a strict compilation error whenever a variable's type is reassigned. 
+* **Codon File Recognition**: Provides rich, out-of-the-box language server support explicitly for `.codon` files.
 
 ## Documentation
 
-Refer to [the documentation](https://microsoft.github.io/pyright) for installation, configuration, and usage details.
+For Pyright configuration usage, refer to [the documentation](https://microsoft.github.io/pyright).
+For Codon specifications, refer to [the Codon documentation](https://docs.exaloop.io/codon/).
