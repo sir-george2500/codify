@@ -1,6 +1,8 @@
 # Codify (Codon Language Server)
 
-![Codon Logo](images/codon.svg)
+<p align="center">
+  <img src="images/codon.svg" width="100" alt="Codon Logo">
+</p>
 
 Codify is the official Visual Studio Code extension for the **Codon** programming language, a high-performance Python compiler that uses strict static typing.
 
