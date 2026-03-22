@@ -186,7 +186,13 @@ export function getChildNodes(node: ParseNode): (ParseNode | undefined)[] {
             return [node.d.typeExpr, node.d.name, node.d.exceptSuite];
 
         case ParseNodeType.For:
-            return [node.d.targetExpr, node.d.iterableExpr, node.d.forSuite, node.d.elseSuite];
+            return [
+                ...(node.d.decorators || []),
+                node.d.targetExpr,
+                node.d.iterableExpr,
+                node.d.forSuite,
+                node.d.elseSuite,
+            ];
 
         case ParseNodeType.FormatString:
             return [...node.d.fieldExprs, ...(node.d.formatExprs ?? [])];
@@ -323,7 +329,7 @@ export function getChildNodes(node: ParseNode): (ParseNode | undefined)[] {
             return [node.d.expr];
 
         case ParseNodeType.While:
-            return [node.d.testExpr, node.d.whileSuite, node.d.elseSuite];
+            return [...(node.d.decorators || []), node.d.testExpr, node.d.whileSuite, node.d.elseSuite];
 
         case ParseNodeType.With:
             return [...node.d.withItems, node.d.suite];

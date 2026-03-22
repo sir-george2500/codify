@@ -315,7 +315,7 @@ export class Parser {
         parseOptions: ParseOptions,
         parseTextMode: ParseTextMode.Expression,
         initialParenDepth?: number,
-        typingSymbolAliases?: Map<string, string>,
+        typingSymbolAliases?: Map<string, string>
     ): ParseExpressionTextResults<ExpressionNode>;
     parseTextExpression(
         fileContents: string,
@@ -324,7 +324,7 @@ export class Parser {
         parseOptions: ParseOptions,
         parseTextMode: ParseTextMode.VariableAnnotation,
         initialParenDepth?: number,
-        typingSymbolAliases?: Map<string, string>,
+        typingSymbolAliases?: Map<string, string>
     ): ParseExpressionTextResults<ExpressionNode>;
     parseTextExpression(
         fileContents: string,
@@ -333,7 +333,7 @@ export class Parser {
         parseOptions: ParseOptions,
         parseTextMode: ParseTextMode.FunctionAnnotation,
         initialParenDepth?: number,
-        typingSymbolAliases?: Map<string, string>,
+        typingSymbolAliases?: Map<string, string>
     ): ParseExpressionTextResults<FunctionAnnotationNode>;
     parseTextExpression(
         fileContents: string,
@@ -342,7 +342,7 @@ export class Parser {
         parseOptions: ParseOptions,
         parseTextMode = ParseTextMode.Expression,
         initialParenDepth = 0,
-        typingSymbolAliases?: Map<string, string>,
+        typingSymbolAliases?: Map<string, string>
     ): ParseExpressionTextResults<ExpressionNode | FunctionAnnotationNode> {
         const diagSink = new DiagnosticSink();
         this._startNewParse(fileContents, textOffset, textLength, parseOptions, diagSink, initialParenDepth);
@@ -361,7 +361,7 @@ export class Parser {
         } else {
             const exprListResult = this._parseTestOrStarExpressionList(
                 /* allowAssignmentExpression */ false,
-                /* allowMultipleUnpack */ true,
+                /* allowMultipleUnpack */ true
             );
             if (exprListResult.parseError) {
                 parseTree = exprListResult.parseError;
@@ -394,7 +394,7 @@ export class Parser {
         textLength: number,
         parseOptions: ParseOptions,
         diagSink: DiagnosticSink,
-        initialParenDepth = 0,
+        initialParenDepth = 0
     ) {
         this._fileContents = fileContents;
         this._parseOptions = parseOptions;
@@ -407,7 +407,7 @@ export class Parser {
             textOffset,
             textLength,
             initialParenDepth,
-            this._parseOptions.useNotebookMode,
+            this._parseOptions.useNotebookMode
         );
         this._tokenIndex = 0;
     }
@@ -618,7 +618,7 @@ export class Parser {
         let defaultExpression: ExpressionNode | undefined;
         if (this._consumeTokenIfOperator(OperatorType.Assign)) {
             defaultExpression = this._parseExpression(
-                /* allowUnpack */ typeParamCategory === TypeParamKind.TypeVarTuple,
+                /* allowUnpack */ typeParamCategory === TypeParamKind.TypeVarTuple
             );
 
             if (
@@ -651,7 +651,7 @@ export class Parser {
                 /* allowAssignmentExpression */ true,
                 /* allowMultipleUnpack */ true,
                 ErrorExpressionCategory.MissingPatternSubject,
-                () => LocMessage.expectedReturnExpr(),
+                () => LocMessage.expectedReturnExpr()
             );
             smellsLikeMatchStatement =
                 expression.nodeType !== ParseNodeType.Error && this._peekToken().type === TokenType.Colon;
@@ -670,7 +670,7 @@ export class Parser {
             /* allowAssignmentExpression */ true,
             /* allowMultipleUnpack */ true,
             ErrorExpressionCategory.MissingPatternSubject,
-            () => LocMessage.expectedReturnExpr(),
+            () => LocMessage.expectedReturnExpr()
         );
         const matchNode = MatchNode.create(matchToken, subjectExpression);
 
@@ -831,7 +831,7 @@ export class Parser {
     private _reportDuplicatePatternCaptureTargets(
         node: PatternAtomNode,
         globalNameMap: Map<string, NameNode>,
-        localNameMap: Map<string, NameNode>,
+        localNameMap: Map<string, NameNode>
     ) {
         const reportTargetIfDuplicate = (nameNode: NameNode) => {
             if (globalNameMap.has(nameNode.d.value) || localNameMap.has(nameNode.d.value)) {
@@ -839,7 +839,7 @@ export class Parser {
                     LocMessage.duplicateCapturePatternTarget().format({
                         name: nameNode.d.value,
                     }),
-                    nameNode,
+                    nameNode
                 );
             } else {
                 localNameMap.set(nameNode.d.value, nameNode);
@@ -900,7 +900,7 @@ export class Parser {
                         this._reportDuplicatePatternCaptureTargets(
                             mapEntry.d.valuePattern,
                             globalNameMap,
-                            localNameMap,
+                            localNameMap
                         );
                     }
                 });
@@ -976,7 +976,7 @@ export class Parser {
             (entry) =>
                 entry.d.orPatterns.length === 1 &&
                 entry.d.orPatterns[0].nodeType === ParseNodeType.PatternCapture &&
-                entry.d.orPatterns[0].d.isStar,
+                entry.d.orPatterns[0].d.isStar
         );
 
         if (starEntries.length > 1) {
@@ -1052,7 +1052,7 @@ export class Parser {
                 diag.addMessage(
                     LocAddendum.orPatternMissingName().format({
                         name: missingNames.map((name) => `"${name}"`).join(', '),
-                    }),
+                    })
                 );
                 this._addSyntaxError(LocMessage.orPatternMissingName() + diag.getString(), orPattern);
             }
@@ -1155,7 +1155,7 @@ export class Parser {
             const endToken = this._peekToken();
             if (
                 this._consumeTokenIfType(
-                    nextToken.type === TokenType.OpenParenthesis ? TokenType.CloseParenthesis : TokenType.CloseBracket,
+                    nextToken.type === TokenType.OpenParenthesis ? TokenType.CloseParenthesis : TokenType.CloseBracket
                 )
             ) {
                 extendRange(casePattern, endToken);
@@ -1164,7 +1164,7 @@ export class Parser {
                     nextToken.type === TokenType.OpenParenthesis
                         ? LocMessage.expectedCloseParen()
                         : LocMessage.expectedCloseBracket(),
-                    nextToken,
+                    nextToken
                 );
                 this._consumeTokensUntilType([
                     TokenType.Colon,
@@ -1190,7 +1190,7 @@ export class Parser {
 
         return this._handleExpressionParseError(
             ErrorExpressionCategory.MissingPattern,
-            LocMessage.expectedPatternExpr(),
+            LocMessage.expectedPatternExpr()
         );
     }
 
@@ -1342,7 +1342,7 @@ export class Parser {
         if (itemList.list.length > 0) {
             // Verify there's at most one ** entry.
             const starStarEntries = itemList.list.filter(
-                (entry) => entry.nodeType === ParseNodeType.PatternMappingExpandEntry,
+                (entry) => entry.nodeType === ParseNodeType.PatternMappingExpandEntry
             );
             if (starStarEntries.length > 1) {
                 this._addSyntaxError(LocMessage.duplicateStarStarPattern(), starStarEntries[1]);
@@ -1668,13 +1668,13 @@ export class Parser {
     }
 
     // for_stmt: [async] 'for' exprlist 'in' testlist suite ['else' suite]
-    private _parseForStatement(asyncToken?: KeywordToken): ForNode {
+    private _parseForStatement(asyncToken?: KeywordToken, decorators?: DecoratorNode[]): ForNode {
         const forToken = this._getKeywordToken(KeywordType.For);
 
         const targetExpr = this._parseExpressionListAsPossibleTuple(
             ErrorExpressionCategory.MissingExpression,
             () => LocMessage.expectedExpr(),
-            forToken,
+            forToken
         );
 
         let seqExpr: ExpressionNode;
@@ -1689,7 +1689,7 @@ export class Parser {
                 /* allowAssignmentExpression */ false,
                 /* allowMultipleUnpack */ true,
                 ErrorExpressionCategory.MissingExpression,
-                () => LocMessage.expectedInExpr(),
+                () => LocMessage.expectedInExpr()
             );
 
             forSuite = this._parseLoopSuite();
@@ -1716,7 +1716,7 @@ export class Parser {
             }
         }
 
-        const forNode = ForNode.create(forToken, targetExpr, seqExpr, forSuite);
+        const forNode = ForNode.create(forToken, targetExpr, seqExpr, forSuite, decorators);
         forNode.d.elseSuite = elseSuite;
         if (elseSuite) {
             extendRange(forNode, elseSuite);
@@ -1795,7 +1795,7 @@ export class Parser {
         const targetExpr = this._parseExpressionListAsPossibleTuple(
             ErrorExpressionCategory.MissingExpression,
             () => LocMessage.expectedExpr(),
-            forToken,
+            forToken
         );
         let seqExpr: ExpressionNode | undefined;
 
@@ -1835,13 +1835,14 @@ export class Parser {
     }
 
     // while_stmt: 'while' test suite ['else' suite]
-    private _parseWhileStatement(): WhileNode {
+    private _parseWhileStatement(decorators?: DecoratorNode[]): WhileNode {
         const whileToken = this._getKeywordToken(KeywordType.While);
 
         const whileNode = WhileNode.create(
             whileToken,
             this._parseTestExpression(/* allowAssignmentExpression */ true),
             this._parseLoopSuite(),
+            decorators
         );
 
         if (this._consumeTokenIfKeyword(KeywordType.Else)) {
@@ -1902,7 +1903,7 @@ export class Parser {
 
             if (this._peekTokenType() !== TokenType.Colon) {
                 const listResult = this._parseExpressionListGeneric(() =>
-                    this._parseTestExpression(/* allowAssignmentExpression */ true),
+                    this._parseTestExpression(/* allowAssignmentExpression */ true)
                 );
                 if (listResult.parseError) {
                     typeExpr = listResult.parseError;
@@ -2005,7 +2006,7 @@ export class Parser {
                 defToken,
                 ErrorExpressionCategory.MissingFunctionParameterList,
                 undefined,
-                decorators,
+                decorators
             );
         }
 
@@ -2028,7 +2029,7 @@ export class Parser {
                 nameToken,
                 ErrorExpressionCategory.MissingFunctionParameterList,
                 NameNode.create(nameToken),
-                decorators,
+                decorators
             );
         }
 
@@ -2437,7 +2438,9 @@ export class Parser {
             if (nextToken.keywordType === KeywordType.Async) {
                 this._getNextToken();
 
-                if (this._peekKeywordType() !== KeywordType.Def) {
+                if (this._peekKeywordType() === KeywordType.For) {
+                    return this._parseForStatement(nextToken, decoratorList);
+                } else if (this._peekKeywordType() !== KeywordType.Def) {
                     this._addSyntaxError(LocMessage.expectedFunctionAfterAsync(), this._peekToken());
                 } else {
                     return this._parseFunctionDef(nextToken, decoratorList);
@@ -2446,6 +2449,10 @@ export class Parser {
                 return this._parseFunctionDef(undefined, decoratorList);
             } else if (nextToken.keywordType === KeywordType.Class) {
                 return this._parseClassDef(decoratorList);
+            } else if (nextToken.keywordType === KeywordType.For) {
+                return this._parseForStatement(undefined, decoratorList);
+            } else if (nextToken.keywordType === KeywordType.While) {
+                return this._parseWhileStatement(decoratorList);
             }
         }
 
@@ -2612,7 +2619,7 @@ export class Parser {
                 /* allowAssignmentExpression */ true,
                 /* allowMultipleUnpack */ true,
                 ErrorExpressionCategory.MissingExpression,
-                () => LocMessage.expectedReturnExpr(),
+                () => LocMessage.expectedReturnExpr()
             );
             this._reportConditionalErrorForStarTupleElement(returnExpr);
             returnNode.d.expr = returnExpr;
@@ -3015,7 +3022,7 @@ export class Parser {
                 /* allowAssignmentExpression */ false,
                 /* allowMultipleUnpack */ true,
                 ErrorExpressionCategory.MissingExpression,
-                () => LocMessage.expectedYieldExpr(),
+                () => LocMessage.expectedYieldExpr()
             );
             this._reportConditionalErrorForStarTupleElement(exprList);
         }
@@ -3057,7 +3064,7 @@ export class Parser {
                     // Remove any non-printable characters.
                     this._addSyntaxError(
                         LocMessage.invalidTokenChars().format({ text: `\\u${firstCharCode.toString(16)}` }),
-                        invalidToken,
+                        invalidToken
                     );
                 }
 
@@ -3170,7 +3177,7 @@ export class Parser {
 
     private _makeExpressionOrTuple(
         exprListResult: ListResult<ExpressionNode>,
-        enclosedInParens: boolean,
+        enclosedInParens: boolean
     ): ExpressionNode {
         // A single-element tuple with no trailing comma is simply an expression
         // that's surrounded by parens.
@@ -3202,7 +3209,7 @@ export class Parser {
     private _parseExpressionListAsPossibleTuple(
         errorCategory: ErrorExpressionCategory,
         getErrorString: () => string,
-        errorToken: Token,
+        errorToken: Token
     ): ExpressionNode {
         if (this._isNextTokenNeverExpression()) {
             this._addSyntaxError(getErrorString(), errorToken);
@@ -3218,7 +3225,7 @@ export class Parser {
 
     private _parseTestListAsExpression(
         errorCategory: ErrorExpressionCategory,
-        getErrorString: () => string,
+        getErrorString: () => string
     ): ExpressionNode {
         if (this._isNextTokenNeverExpression()) {
             return this._handleExpressionParseError(errorCategory, getErrorString());
@@ -3235,7 +3242,7 @@ export class Parser {
         allowAssignmentExpression: boolean,
         allowMultipleUnpack: boolean,
         errorCategory: ErrorExpressionCategory,
-        getErrorString: () => string,
+        getErrorString: () => string
     ): ExpressionNode {
         if (this._isNextTokenNeverExpression()) {
             return this._handleExpressionParseError(errorCategory, getErrorString());
@@ -3259,10 +3266,10 @@ export class Parser {
 
     private _parseTestOrStarExpressionList(
         allowAssignmentExpression: boolean,
-        allowMultipleUnpack: boolean,
+        allowMultipleUnpack: boolean
     ): ListResult<ExpressionNode> {
         const exprListResult = this._parseExpressionListGeneric(() =>
-            this._parseTestOrStarExpression(allowAssignmentExpression),
+            this._parseTestOrStarExpression(allowAssignmentExpression)
         );
 
         if (!allowMultipleUnpack && !exprListResult.parseError) {
@@ -3327,7 +3334,7 @@ export class Parser {
             return TernaryNode.create(
                 ifExpr,
                 testExpr,
-                this._handleExpressionParseError(ErrorExpressionCategory.MissingElse, LocMessage.expectedElse()),
+                this._handleExpressionParseError(ErrorExpressionCategory.MissingElse, LocMessage.expectedElse())
             );
         }
 
@@ -3738,7 +3745,7 @@ export class Parser {
                     atomExpression,
                     subscriptList.list,
                     subscriptList.trailingComma,
-                    closingToken,
+                    closingToken
                 );
                 extendRange(indexNode, indexNode);
 
@@ -3749,7 +3756,7 @@ export class Parser {
                         ErrorExpressionCategory.MissingIndexCloseBracket,
                         LocMessage.expectedCloseBracket(),
                         startOfTrailerToken,
-                        indexNode,
+                        indexNode
                     );
                 }
 
@@ -3770,7 +3777,7 @@ export class Parser {
                         LocMessage.expectedMemberName(),
                         startOfTrailerToken,
                         atomExpression,
-                        [TokenType.Keyword],
+                        [TokenType.Keyword]
                     );
                 }
 
@@ -3895,7 +3902,7 @@ export class Parser {
                 LocMessage.expectedSliceIndex(),
                 /* targetToken */ undefined,
                 /* childNode */ undefined,
-                [TokenType.CloseBracket],
+                [TokenType.CloseBracket]
             );
             argList.push(ArgumentNode.create(this._peekToken(), errorNode, ArgCategory.Simple));
         }
@@ -4086,7 +4093,7 @@ export class Parser {
             this._addSyntaxError(LocMessage.backticksIllegal(), nextToken);
 
             const expressionNode = this._parseTestListAsExpression(ErrorExpressionCategory.MissingExpression, () =>
-                LocMessage.expectedExpr(),
+                LocMessage.expectedExpr()
             );
 
             this._consumeTokenIfType(TokenType.Backtick);
@@ -4153,7 +4160,7 @@ export class Parser {
         errorMsg: string,
         targetToken?: Token,
         childNode?: ExpressionNode,
-        additionalStopTokens?: TokenType[],
+        additionalStopTokens?: TokenType[]
     ): ErrorNode {
         this._addSyntaxError(errorMsg, targetToken ?? this._peekToken());
 
@@ -4166,7 +4173,7 @@ export class Parser {
         // Sibling nodes in parse tree shouldn't overlap each other.
         const nextToken = this._peekToken();
         const initialRange: TextRange = stopTokens.some((k) => nextToken.type === k)
-            ? (targetToken ?? childNode ?? TextRange.create(nextToken.start, /* length */ 0))
+            ? targetToken ?? childNode ?? TextRange.create(nextToken.start, /* length */ 0)
             : nextToken;
         const expr = ErrorNode.create(initialRange, category, childNode);
         this._consumeTokensUntilType(stopTokens);
@@ -4220,7 +4227,7 @@ export class Parser {
                     ErrorExpressionCategory.MissingTupleCloseParen,
                     LocMessage.expectedCloseParen(),
                     startParen,
-                    yieldExpr,
+                    yieldExpr
                 );
             } else {
                 extendRange(yieldExpr, this._getNextToken());
@@ -4239,7 +4246,7 @@ export class Parser {
                 ErrorExpressionCategory.MissingTupleCloseParen,
                 LocMessage.expectedCloseParen(),
                 startParen,
-                exprListResult.parseError ?? tupleOrExpression,
+                exprListResult.parseError ?? tupleOrExpression
             );
         } else {
             extendRange(tupleOrExpression, this._getNextToken());
@@ -4261,7 +4268,7 @@ export class Parser {
                 ErrorExpressionCategory.MissingListCloseBracket,
                 LocMessage.expectedCloseBracket(),
                 startBracket,
-                exprListResult.parseError ?? _createList(),
+                exprListResult.parseError ?? _createList()
             );
         }
 
@@ -4300,7 +4307,7 @@ export class Parser {
                 return expr;
             },
             () => this._isNextTokenNeverExpression(),
-            () => sawComprehension,
+            () => sawComprehension
         );
     }
 
@@ -4405,7 +4412,7 @@ export class Parser {
                     if (isDictionary) {
                         const missingValueErrorNode = ErrorNode.create(
                             this._peekToken(),
-                            ErrorExpressionCategory.MissingDictValue,
+                            ErrorExpressionCategory.MissingDictValue
                         );
                         const keyEntryNode = DictionaryKeyEntryNode.create(keyExpression, missingValueErrorNode);
                         dictionaryEntries.push(keyEntryNode);
@@ -4488,7 +4495,7 @@ export class Parser {
     private _parseExpressionListGeneric<T extends ParseNode = ExpressionNode>(
         parser: () => T | ErrorNode,
         terminalCheck: () => boolean = () => this._isNextTokenNeverExpression(),
-        finalEntryCheck: () => boolean = () => false,
+        finalEntryCheck: () => boolean = () => false
     ): ListResult<T> {
         let trailingComma = false;
         const list: T[] = [];
@@ -4533,7 +4540,7 @@ export class Parser {
             /* allowAssignmentExpression */ false,
             /* allowMultipleUnpack */ false,
             ErrorExpressionCategory.MissingExpression,
-            () => LocMessage.expectedExpr(),
+            () => LocMessage.expectedExpr()
         );
         let annotationExpr: ExpressionNode | undefined;
 
@@ -4574,7 +4581,7 @@ export class Parser {
                     /* allowAssignmentExpression */ false,
                     /* allowMultipleUnpack */ true,
                     ErrorExpressionCategory.MissingExpression,
-                    () => LocMessage.expectedAssignRightHandExpr(),
+                    () => LocMessage.expectedAssignRightHandExpr()
                 );
 
             this._isParsingTypeAnnotation = wasParsingTypeAnnotation;
@@ -4596,7 +4603,7 @@ export class Parser {
                     /* allowAssignmentExpression */ false,
                     /* allowMultipleUnpack */ true,
                     ErrorExpressionCategory.MissingExpression,
-                    () => LocMessage.expectedBinaryRightHandExpr(),
+                    () => LocMessage.expectedBinaryRightHandExpr()
                 );
             this._reportConditionalErrorForStarTupleElement(rightExpr, pythonVersion3_9);
 
@@ -4622,7 +4629,7 @@ export class Parser {
                     /* allowAssignmentExpression */ false,
                     /* allowMultipleUnpack */ true,
                     ErrorExpressionCategory.MissingExpression,
-                    () => LocMessage.expectedAssignRightHandExpr(),
+                    () => LocMessage.expectedAssignRightHandExpr()
                 );
 
             if (rightExpr.nodeType === ParseNodeType.Error) {
@@ -4751,7 +4758,7 @@ export class Parser {
 
     private _reportStringTokenErrors(
         stringToken: StringToken | FStringStartToken,
-        unescapedResult?: StringTokenUtils.UnescapedString,
+        unescapedResult?: StringTokenUtils.UnescapedString
     ) {
         if (stringToken.flags & StringTokenFlags.Unterminated) {
             this._addSyntaxError(LocMessage.stringUnterminated(), stringToken);
@@ -4836,7 +4843,7 @@ export class Parser {
             StringTokenFlags.None,
             typeString,
             0,
-            /* comments */ undefined,
+            /* comments */ undefined
         );
     }
 
@@ -4856,7 +4863,7 @@ export class Parser {
             this._parseOptions,
             ParseTextMode.VariableAnnotation,
             /* initialParenDepth */ undefined,
-            this._typingSymbolAliases,
+            this._typingSymbolAliases
         );
 
         parseResults.diagnostics.forEach((diag) => {
@@ -4881,7 +4888,7 @@ export class Parser {
             this._parseOptions,
             ParseTextMode.FunctionAnnotation,
             /* initialParenDepth */ undefined,
-            this._typingSymbolAliases,
+            this._typingSymbolAliases
         );
 
         parseResults.diagnostics.forEach((diag) => {
@@ -4903,7 +4910,7 @@ export class Parser {
         fieldExpressions: ExpressionNode[],
         middleTokens: FStringMiddleToken[],
         formatExpressions: ExpressionNode[],
-        nestingDepth = 0,
+        nestingDepth = 0
     ): boolean {
         let nextToken = this._getNextToken();
 
@@ -4917,7 +4924,7 @@ export class Parser {
                 /* allowAssignmentExpression */ true,
                 /* allowMultipleUnpack */ true,
                 ErrorExpressionCategory.MissingExpression,
-                () => LocMessage.expectedExpr(),
+                () => LocMessage.expectedExpr()
             );
 
         fieldExpressions.push(expr);
@@ -4975,7 +4982,7 @@ export class Parser {
         fieldExpressions: ExpressionNode[],
         middleTokens: FStringMiddleToken[],
         formatExpressions: ExpressionNode[],
-        nestingDepth: number,
+        nestingDepth: number
     ) {
         while (true) {
             const nextToken = this._peekToken();
@@ -5055,7 +5062,7 @@ export class Parser {
                 nextToken.type === TokenType.CloseCurlyBrace
                     ? LocMessage.formatStringBrace()
                     : LocMessage.stringUnterminated(),
-                nextToken,
+                nextToken
             );
             break;
         }
@@ -5069,7 +5076,7 @@ export class Parser {
         leftExpression: ExpressionNode,
         rightExpression: ExpressionNode,
         operatorToken: Token,
-        operator: OperatorType,
+        operator: OperatorType
     ) {
         const binaryNode = BinaryOperationNode.create(leftExpression, rightExpression, operatorToken, operator);
 
@@ -5137,7 +5144,7 @@ export class Parser {
                 const stringToken = stringNode.d.strings[0].d.token;
                 const stringValue = StringTokenUtils.getUnescapedString(
                     stringNode.d.strings[0].d.token,
-                    /* elideCrlf */ false,
+                    /* elideCrlf */ false
                 );
                 const unescapedString = stringValue.value;
                 const tokenOffset = stringToken.start;
@@ -5165,7 +5172,7 @@ export class Parser {
                         this._parseOptions,
                         ParseTextMode.VariableAnnotation,
                         (stringNode.d.strings[0].d.token.flags & StringTokenFlags.Triplicate) !== 0 ? 1 : 0,
-                        this._typingSymbolAliases,
+                        this._typingSymbolAliases
                     );
 
                     if (
@@ -5193,7 +5200,7 @@ export class Parser {
     // wasn't surrounded in parentheses.
     private _reportConditionalErrorForStarTupleElement(
         possibleTupleExpr: ExpressionNode,
-        pythonVersion = pythonVersion3_8,
+        pythonVersion = pythonVersion3_8
     ) {
         if (possibleTupleExpr.nodeType !== ParseNodeType.Tuple) {
             return;
@@ -5428,7 +5435,7 @@ export class Parser {
         if (!this._areErrorsSuppressed) {
             this._diagSink.addError(
                 message,
-                convertOffsetsToRange(range.start, range.start + range.length, this._tokenizerOutput!.lines),
+                convertOffsetsToRange(range.start, range.start + range.length, this._tokenizerOutput!.lines)
             );
         }
     }

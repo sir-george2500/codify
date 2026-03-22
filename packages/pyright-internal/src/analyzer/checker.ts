@@ -40,8 +40,8 @@ import {
     ErrorNode,
     ExceptNode,
     ExpressionNode,
-    ForNode,
     FormatStringNode,
+    ForNode,
     FunctionNode,
     GlobalNode,
     IfNode,
@@ -49,6 +49,7 @@ import {
     ImportFromAsNode,
     ImportFromNode,
     IndexNode,
+    isExpressionNode,
     LambdaNode,
     ListNode,
     MatchNode,
@@ -84,10 +85,9 @@ import {
     WithNode,
     YieldFromNode,
     YieldNode,
-    isExpressionNode,
 } from '../parser/parseNodes';
 import { ParserOutput } from '../parser/parser';
-import { UnescapeError, UnescapeErrorType, getUnescapedString } from '../parser/stringTokenUtils';
+import { getUnescapedString, UnescapeError, UnescapeErrorType } from '../parser/stringTokenUtils';
 import { OperatorType, StringTokenFlags, TokenType } from '../parser/tokenizerTypes';
 import { AnalyzerFileInfo } from './analyzerFileInfo';
 import * as AnalyzerNodeInfo from './analyzerNodeInfo';
@@ -98,7 +98,7 @@ import { Declaration, DeclarationType, isAliasDeclaration, isVariableDeclaration
 import { getNameNodeForDeclaration } from './declarationUtils';
 import { deprecatedAliases, deprecatedSpecialForms } from './deprecatedSymbols';
 import { getEnumDeclaredValueType, isEnumClassWithMembers, transformTypeForEnumMember } from './enums';
-import { ImportResolver, createImportedModuleDescriptor } from './importResolver';
+import { createImportedModuleDescriptor, ImportResolver } from './importResolver';
 import { ImportResult, ImportType } from './importResult';
 import { getRelativeModuleName, getTopLevelImports } from './importStatementUtils';
 import { getParamListDetails } from './parameterUtils';
@@ -136,21 +136,11 @@ import {
     AnyType,
     ClassType,
     ClassTypeFlags,
+    combineTypes,
     DataClassEntry,
     EnumLiteral,
     FunctionParam,
     FunctionType,
-    ModuleType,
-    OverloadedType,
-    Type,
-    TypeBase,
-    TypeCategory,
-    TypeVarScopeType,
-    TypeVarType,
-    TypedDictEntry,
-    UnknownType,
-    Variance,
-    combineTypes,
     isAnyOrUnknown,
     isClass,
     isClassInstance,
@@ -168,12 +158,21 @@ import {
     isUnbound,
     isUnion,
     isUnknown,
+    ModuleType,
+    OverloadedType,
+    Type,
+    TypeBase,
+    TypeCategory,
+    TypedDictEntry,
+    TypeVarScopeType,
+    TypeVarType,
+    UnknownType,
+    Variance,
 } from './types';
 import {
-    ClassMember,
-    MemberAccessFlags,
     applySolvedTypeVars,
     buildSolutionFromSpecializedClass,
+    ClassMember,
     convertToInstance,
     derivesFromClassRecursive,
     doForEachSubtype,
@@ -195,6 +194,7 @@ import {
     lookUpClassMember,
     makeTypeVarsBound,
     mapSubtypes,
+    MemberAccessFlags,
     partiallySpecializeType,
     selfSpecializeClass,
     transformPossibleRecursiveTypeAlias,
@@ -565,13 +565,16 @@ export class Checker extends ParseTreeWalker {
                 }
             }
 
-            // If this is a stub, ensure that the return type is specified.
-            if (this._fileInfo.isStubFile) {
-                const returnAnnotation = node.d.returnAnnotation || node.d.funcAnnotationComment?.d.returnAnnotation;
-                if (!returnAnnotation) {
+            // Ensure that the return type is specified for all Codon functions (unless __init__).
+            const returnAnnotation = node.d.returnAnnotation || node.d.funcAnnotationComment?.d.returnAnnotation;
+            if (!returnAnnotation && node.d.name.d.value !== '__init__') {
+                if (
+                    this._fileInfo.isStubFile ||
+                    this._fileInfo.diagnosticRuleSet.reportMissingParameterType !== 'none'
+                ) {
                     this._evaluator.addDiagnostic(
-                        DiagnosticRule.reportUnknownParameterType,
-                        LocMessage.returnTypeUnknown(),
+                        DiagnosticRule.reportMissingParameterType,
+                        "Return type annotation is missing for function '" + node.d.name.d.value + "'",
                         node.d.name
                     );
                 }

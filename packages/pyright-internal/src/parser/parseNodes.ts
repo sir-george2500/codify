@@ -254,6 +254,7 @@ export namespace IfNode {
 export interface WhileNode extends ParseNodeBase<ParseNodeType.While> {
     d: {
         firstToken: Token;
+        decorators?: DecoratorNode[] | undefined;
         testExpr: ExpressionNode;
         whileSuite: SuiteNode;
         elseSuite?: SuiteNode | undefined;
@@ -261,7 +262,12 @@ export interface WhileNode extends ParseNodeBase<ParseNodeType.While> {
 }
 
 export namespace WhileNode {
-    export function create(whileToken: Token, testExpr: ExpressionNode, whileSuite: SuiteNode) {
+    export function create(
+        whileToken: Token,
+        testExpr: ExpressionNode,
+        whileSuite: SuiteNode,
+        decorators?: DecoratorNode[]
+    ) {
         const node: WhileNode = {
             start: whileToken.start,
             length: whileToken.length,
@@ -271,10 +277,17 @@ export namespace WhileNode {
             a: undefined,
             d: {
                 firstToken: whileToken,
+                decorators: decorators || [],
                 testExpr,
                 whileSuite,
             },
         };
+
+        if (decorators) {
+            decorators.forEach((decorator) => {
+                decorator.parent = node;
+            });
+        }
 
         testExpr.parent = node;
         whileSuite.parent = node;
@@ -288,6 +301,7 @@ export namespace WhileNode {
 export interface ForNode extends ParseNodeBase<ParseNodeType.For> {
     d: {
         firstToken: Token;
+        decorators?: DecoratorNode[] | undefined;
         isAsync?: boolean;
         asyncToken?: Token;
         targetExpr: ExpressionNode;
@@ -304,6 +318,7 @@ export namespace ForNode {
         targetExpr: ExpressionNode,
         iterableExpr: ExpressionNode,
         forSuite: SuiteNode,
+        decorators?: DecoratorNode[]
     ) {
         const node: ForNode = {
             start: forToken.start,
@@ -314,11 +329,18 @@ export namespace ForNode {
             a: undefined,
             d: {
                 firstToken: forToken,
+                decorators: decorators || [],
                 targetExpr,
                 iterableExpr,
                 forSuite,
             },
         };
+
+        if (decorators) {
+            decorators.forEach((decorator) => {
+                decorator.parent = node;
+            });
+        }
 
         targetExpr.parent = node;
         iterableExpr.parent = node;
@@ -866,7 +888,7 @@ export namespace ErrorNode {
         initialRange: TextRange,
         category: ErrorExpressionCategory,
         child?: ExpressionNode,
-        decorators?: DecoratorNode[],
+        decorators?: DecoratorNode[]
     ) {
         const node: ErrorNode = {
             start: initialRange.start,
@@ -950,7 +972,7 @@ export namespace BinaryOperationNode {
         leftExpr: ExpressionNode,
         rightExpr: ExpressionNode,
         operatorToken: Token,
-        operator: OperatorType,
+        operator: OperatorType
     ) {
         const node: BinaryOperationNode = {
             start: leftExpr.start,
@@ -1065,7 +1087,7 @@ export namespace TypeParameterNode {
         name: NameNode,
         typeParamKind: TypeParamKind,
         boundExpr?: ExpressionNode,
-        defaultExpr?: ExpressionNode,
+        defaultExpr?: ExpressionNode
     ) {
         const node: TypeParameterNode = {
             start: name.start,
@@ -1141,7 +1163,7 @@ export namespace TypeAliasNode {
         typeToken: KeywordToken,
         name: NameNode,
         expr: ExpressionNode,
-        typeParams?: TypeParameterListNode,
+        typeParams?: TypeParameterListNode
     ) {
         const node: TypeAliasNode = {
             start: typeToken.start,
@@ -1215,7 +1237,7 @@ export namespace FunctionAnnotationNode {
         openParenToken: Token,
         isEllipsis: boolean,
         paramAnnotations: ExpressionNode[],
-        returnAnnotation: ExpressionNode,
+        returnAnnotation: ExpressionNode
     ) {
         const node: FunctionAnnotationNode = {
             start: openParenToken.start,
@@ -1260,7 +1282,7 @@ export namespace AugmentedAssignmentNode {
         leftExpr: ExpressionNode,
         rightExpr: ExpressionNode,
         operator: OperatorType,
-        destExpr: ExpressionNode,
+        destExpr: ExpressionNode
     ) {
         const node: AugmentedAssignmentNode = {
             start: leftExpr.start,
@@ -1487,7 +1509,7 @@ export namespace IndexNode {
         leftExpr: ExpressionNode,
         items: ArgumentNode[],
         trailingComma: boolean,
-        closeBracketToken: Token,
+        closeBracketToken: Token
     ) {
         const node: IndexNode = {
             start: leftExpr.start,
@@ -1791,7 +1813,7 @@ export namespace FormatStringNode {
         endToken: FStringEndToken | undefined,
         middleTokens: FStringMiddleToken[],
         fieldExprs: ExpressionNode[],
-        formatExprs: ExpressionNode[],
+        formatExprs: ExpressionNode[]
     ) {
         const node: FormatStringNode = {
             start: startToken.start,
@@ -2416,7 +2438,7 @@ export namespace CaseNode {
         pattern: PatternAtomNode,
         isIrrefutable: boolean,
         guardExpr: ExpressionNode | undefined,
-        suite: SuiteNode,
+        suite: SuiteNode
     ) {
         const node: CaseNode = {
             start: caseToken.start,
@@ -2459,7 +2481,7 @@ export namespace PatternSequenceNode {
             (entry) =>
                 entry.d.orPatterns.length === 1 &&
                 entry.d.orPatterns[0].nodeType === ParseNodeType.PatternCapture &&
-                entry.d.orPatterns[0].d.isStar,
+                entry.d.orPatterns[0].d.isStar
         );
 
         const node: PatternSequenceNode = {
@@ -2694,7 +2716,7 @@ export interface PatternMappingKeyEntryNode extends ParseNodeBase<ParseNodeType.
 export namespace PatternMappingKeyEntryNode {
     export function create(
         keyPattern: PatternLiteralNode | PatternValueNode | ErrorNode,
-        valuePattern: PatternAsNode | ErrorNode,
+        valuePattern: PatternAsNode | ErrorNode
     ) {
         const node: PatternMappingKeyEntryNode = {
             start: keyPattern.start,
