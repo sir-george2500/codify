@@ -1,19 +1,19 @@
 {
-    "name": "pyright",
-    "displayName": "Pyright",
-    "description": "Type checker for the Python language",
+    "name": "codify",
+    "displayName": "Codify",
+    "description": "Codify - Codon Language Server CLI",
     "version": "1.1.407",
     "license": "MIT",
     "author": {
-        "name": "Microsoft Corporation"
+        "name": "Codify Contributors"
     },
-    "publisher": "Microsoft Corporation",
+    "publisher": "codify",
     "engines": {
         "node": ">=14.0.0"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/Microsoft/pyright",
+        "url": "https://github.com/sir-george2500/codify",
         "directory": "packages/pyright"
     },
     "scripts": {

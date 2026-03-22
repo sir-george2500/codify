@@ -1,7 +1,7 @@
 {
-    "name": "pyright-internal",
-    "displayName": "pyright",
-    "description": "Type checker for the Python language",
+    "name": "codify-internal",
+    "displayName": "Codify Internal",
+    "description": "Codify - Codon Language Server Internal",
     "version": "1.1.407",
     "license": "MIT",
     "private": true,
