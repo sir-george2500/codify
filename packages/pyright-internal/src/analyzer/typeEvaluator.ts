@@ -5069,6 +5069,20 @@ export function createTypeEvaluator(
                     ) {
                         isCodonBuiltin = true;
                     }
+
+                    const enclosingFunction = ParseTreeUtils.getEnclosingFunction(node);
+                    if (
+                        enclosingFunction &&
+                        enclosingFunction.d.params.some(
+                            (p) =>
+                                p.d.name?.d.value === name &&
+                                p.d.annotation?.nodeType === ParseNodeType.Name &&
+                                p.d.annotation.d.value === 'type'
+                        )
+                    ) {
+                        isCodonBuiltin = true;
+                        type = TypeVarType.cloneAsInstantiable(TypeVarType.createInstance(name));
+                    }
                 }
 
                 if (!isCodonBuiltin) {
@@ -16045,6 +16059,12 @@ export function createTypeEvaluator(
                     });
 
                     if (isLiteralType) {
+                        type = exprType.type;
+                    } else if (
+                        isInstantiableClass(exprType.type) &&
+                        ['int', 'bool', 'str', 'bytes', 'float'].includes(exprType.type.shared.name)
+                    ) {
+                        // Codon Rule: Support metaprogramming where type classes evaluate directly to literal instances.
                         type = exprType.type;
                     }
                 }
