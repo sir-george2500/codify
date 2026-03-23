@@ -1,10 +1,10 @@
-# Codify (Codon Language Server)
+# Codon Language Server
 
 <p align="center">
   <img src="packages/vscode-pyright/images/codonimagelogo.png" width="100" alt="Codon Logo">
 </p>
 
-Codify is a full-featured, standards-based static type checker and Language Server Protocol (LSP) for **Codon**, a high-performance, strictly typed Python compiler. Built as a fork of Microsoft's Pyright, Codify is heavily modified to enforce Codon's zero-overhead static typing regime, C-FFI layers, and parallel loop architectures.
+**Codon Language Server** is a full-featured, standards-based static type checker and Language Server Protocol (LSP) for **Codon**, a high-performance, strictly typed Python compiler. Built as a fork of Microsoft's Pyright, this project is heavily modified to enforce Codon's zero-overhead static typing regime, C-FFI layers, and parallel loop architectures.
 
 ## Core Features
 

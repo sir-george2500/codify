@@ -1,12 +1,11 @@
-# Codify (Codon Language Server)
-
+# Codon Language Server
 <p align="center">
   <img src="images/codonimagelogo.png" width="100" alt="Codon Logo">
 </p>
 
-Codify is the official Visual Studio Code extension for the **Codon** programming language, a high-performance Python compiler that uses strict static typing.
+**Codon Language Server** is the official Visual Studio Code extension for the **Codon** programming language, a high-performance Python compiler that uses strict static typing.
 
-Built as a fork of Pyright, Codify is modified to deeply integrate with Codon's compilation targets and provide strict typing safety nets directly in your editor.
+Built as a fork of Pyright, this extension is modified to deeply integrate with Codon's compilation targets and provide strict typing safety nets directly in your editor.
 
 ## Features Added for Codon
 

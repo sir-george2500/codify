@@ -1,0 +1,8 @@
+from typing import Literal
+
+n: Literal[int] = 42
+
+def fib(n: Literal[int]) -> Literal[int]:
+    return 1 if n < 2 else fib(n - 1) + fib(n - 2)
+
+n2: Literal[int] = fib(10)

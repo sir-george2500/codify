@@ -1,6 +1,6 @@
 {
     "name": "bits-codon",
-    "displayName": "Codify",
+    "displayName": "Codon Language Server",
     "description": "Codon Language Server",
     "version": "1.1.407",
     "license": "MIT",

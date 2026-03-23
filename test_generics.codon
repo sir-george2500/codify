@@ -1,0 +1,19 @@
+def foo[T](x: list[T]):
+    print(max(x))
+
+foo([20, 42, 12]) 
+foo(['hello', 'world']) 
+
+def bar(x: list[T], T: type): 
+    print(max(x))
+
+bar([20, 42, 12], int) 
+bar([20, 42, 12], T=int)
+
+class A[T]: 
+    x: T
+    def __init__(self, x: T):
+        self.x = x
+
+x = A(42) 
+y = A[str]('hello') 
