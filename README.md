@@ -1,19 +1,16 @@
 # Codon Language Server
 
 <p align="center">
-  <img src="packages/vscode-pyright/images/codonimagelogo.png" width="100" alt="Codon Logo">
+  <img src="packages/vscode-pyright/images/codonimagelogo.png" width="128" alt="Codon Logo">
 </p>
 
-**Codon Language Server** is a full-featured, standards-based static type checker and Language Server Protocol (LSP) for **Codon**, a high-performance, strictly typed Python compiler. Built as a fork of Microsoft's Pyright, this project is heavily modified to enforce Codon's zero-overhead static typing regime, C-FFI layers, and parallel loop architectures.
+## Overview
+
+**Codon Language Server (CLS)** is a high-performance, standards-based static type checker and Language Server Protocol (LSP) implementation for the **Codon** programming language.
+
+Codon is a high-performance Python compiler that generates native machine code without runtime overhead. This project, built as a deeply modified fork of Microsoft's **Pyright**, is specifically engineered to enforce Codon's zero-overhead static typing regime, handle its C-FFI layers, and analyze its parallel loop architectures.
 
 ## Core Features
-
-- **Strict Type Mutation Enforcement**: Unlike standard Python, Codon variables cannot change their type once initialized. Codify enforces this by injecting a global, unsuppressible compilation error into the analyzer whenever a user attempts to reassign a variable's type (e.g., `i = 3` followed by `i = "5.7"`).
-- **Predictable Multithreading Restrictions**: Codify actively rejects implicit mutations of global, outer-scope data structures and strictly forbids the `global` keyword. This guarantees safety during implicit concurrent execution passes, such as Codon's `@par` multithreading loops.
-- **Native Codon Diagnostics**: Emits tailored, educational compiler warnings specific to Codon's syntax and built-ins.
-- **Experimental Native LSP (`lsp/`)**: Exploring the future of the language server, we've initialized a natively implemented, strictly-typed LSP architecture built from the ground up natively in Codon. This experimental core enforces immutability and precise error tracking using a strict `Result[T, E]` pattern for total type safety.
-
-## Using Codify
 
 This repository provides the modified VS Code extension (`vscode-pyright`) tuned for `.codon` file integration.
 
