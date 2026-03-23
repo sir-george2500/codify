@@ -1,14 +1,37 @@
-# Until https://github.com/microsoft/vscode-vsce/issues/417 is fixed,
-# ignore known build artifacts.
+# Ignore all node_modules at any level
+**/node_modules/**
 
-node_modules
+# Ignore build artifacts
+out/**
+dist/**
+build/**
+.webpack_cache/**
+
+# Ignore source and config files (since we bundle)
+src/**
+tsconfig.json
+webpack.config.js
+package-lock.json
+packages.config
+sign.proj
+
+# Ignore IDE files
 .vscode/**
 .vscode-test/**
-out/**
-src/**
+.editorconfig
+.eslintrc.json
+.prettierrc*
 .gitignore
-build/**
 
-tsconfig.*
-webpack.*
-.webpack_cache
+# Ignore documentation and tests
+docs/**
+tests/**
+CHANGELOG.md
+
+# Ignore packaged extensions
+*.vsix
+
+# Whitelist necessary files in dist
+!dist/extension.js
+!dist/server.js
+!dist/typeshed-fallback/**
