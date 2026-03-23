@@ -53,23 +53,6 @@ const pythonPathChangedListenerMap = new Map<string, string>();
 const defaultHeapSize = 3072;
 
 export async function activate(context: ExtensionContext) {
-    const pythonSettings = workspace.getConfiguration('python');
-    const langServer = pythonSettings.get('languageServer');
-
-    // See if Pylance is installed. If so, don't activate the Pyright extension.
-    // Doing so will generate "command already registered" errors and redundant
-    // hover text, etc.because the two extensions overlap in functionality.
-    const pylanceExtension = extensions.getExtension('ms-python.vscode-pylance');
-    if (pylanceExtension && langServer !== 'None') {
-        window.showErrorMessage(
-            'Pyright has detected that the Pylance extension is installed. ' +
-                'Pylance includes the functionality of Pyright, and running both of ' +
-                'these extensions can lead to problems. Pyright will disable itself. ' +
-                'Uninstall or disable Pyright to avoid this message.'
-        );
-        return;
-    }
-
     cancellationStrategy = new FileBasedCancellationStrategy();
 
     const bundlePath = context.asAbsolutePath(path.join('dist', 'server.js'));
@@ -106,7 +89,7 @@ export async function activate(context: ExtensionContext) {
         ],
         synchronize: {
             // Synchronize the setting section to the server.
-            configurationSection: ['python', 'pyright'],
+            configurationSection: ['python', 'pyright', 'codon'],
         },
         connectionOptions: { cancellationStrategy: cancellationStrategy },
         middleware: {
@@ -184,7 +167,7 @@ export async function activate(context: ExtensionContext) {
     };
 
     // Create the language client and start the client.
-    const client = new LanguageClient('python', 'Pyright', serverOptions, clientOptions);
+    const client = new LanguageClient('bits-codon', 'Codon Language Server', serverOptions, clientOptions);
     languageClient = client;
 
     // Register our custom commands.
