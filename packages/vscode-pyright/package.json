@@ -1,5 +1,5 @@
 {
-    "name": "vscode-pyright",
+    "name": "bits-codon",
     "displayName": "Codify",
     "description": "Codon Language Server",
     "version": "1.1.407",
@@ -1597,9 +1597,9 @@
     },
     "scripts": {
         "clean": "shx rm -rf ./dist ./out",
-        "prepackage": "node ./build/renamePackage.js pyright",
+        "prepackage": "node ./build/renamePackage.js bits-codon",
         "package": "vsce package",
-        "postpackage": "node ./build/renamePackage.js vscode-pyright",
+        "postpackage": "node ./build/renamePackage.js bits-codon",
         "vscode:prepublish": "node ./build/checkPackage.js && npm run clean && webpack --mode production --progress",
         "webpack": "webpack --mode development --progress",
         "webpack-dev": "npm run clean && webpack --mode development --watch --progress"
